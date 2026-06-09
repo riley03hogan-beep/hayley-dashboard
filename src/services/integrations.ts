@@ -32,7 +32,7 @@ export function getEventsBySource(events: CalendarEvent[], source: CalendarEvent
 
 // Connect Gmail API here after OAuth is configured.
 // Expected flow:
-// 1. Use a Google OAuth client ID from NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+// 1. Use the server-side Google OAuth env vars from .env.local.
 // 2. Request Gmail read-only scopes such as gmail.readonly.
 // 3. Fetch messages through the Gmail API and map them to EmailMessage.
 // 4. Run categorizeGmailMessage before rendering.
@@ -42,7 +42,7 @@ export async function fetchGmailMessages(): Promise<EmailMessage[]> {
 
 // Connect Google Calendar API here after OAuth is configured.
 // Expected flow:
-// 1. Use NEXT_PUBLIC_GOOGLE_CLIENT_ID and NEXT_PUBLIC_GOOGLE_API_KEY.
+// 1. Use the server-side Google OAuth env vars from .env.local.
 // 2. Request calendar.readonly scope.
 // 3. Fetch calendar events from primary plus connected Canvas/Teamworks calendars.
 // 4. Map events to CalendarEvent with source tags.

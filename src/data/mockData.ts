@@ -16,7 +16,7 @@ export const quickLinks: QuickLink[] = [
   },
   {
     title: 'Google Calendar',
-    description: 'Classes, Teamworks, assignments and personal schedule',
+    description: 'Basketball schedule and Canvas deadlines',
     href: 'https://calendar.google.com/calendar/u/0/r/week',
     initials: 'GC',
   },
@@ -35,20 +35,8 @@ export const quickLinks: QuickLink[] = [
   {
     title: 'Outlook',
     description: 'Original Illinois State inbox',
-    href: 'https://outlook.cloud.microsoft/mail/',
+    href: 'https://outlook.cloud.microsoft/mail/inbox',
     initials: 'OU',
-  },
-  {
-    title: 'Notes',
-    description: 'Class notes, coach questions and quick thoughts',
-    href: '#notes',
-    initials: 'NT',
-  },
-  {
-    title: 'To-Do List',
-    description: 'School, basketball, admin and urgent tasks',
-    href: '#todo',
-    initials: 'TD',
   },
 ];
 
@@ -121,7 +109,7 @@ export const mockEvents: CalendarEvent[] = [
     start: '2026-06-08T13:00:00',
     end: '2026-06-08T14:00:00',
     dayLabel: 'Today',
-    source: 'Teamworks',
+    source: 'Basketball',
     location: 'Basketball office',
   },
   {
@@ -139,7 +127,7 @@ export const mockEvents: CalendarEvent[] = [
     start: '2026-06-09T09:30:00',
     end: '2026-06-09T10:00:00',
     dayLabel: 'Tomorrow',
-    source: 'Teamworks',
+    source: 'Basketball',
     location: 'Basketball office',
   },
   {
@@ -153,11 +141,11 @@ export const mockEvents: CalendarEvent[] = [
   },
   {
     id: 'event-6',
-    title: 'Call home',
+    title: 'Review scouting notes',
     start: '2026-06-10T18:00:00',
     end: '2026-06-10T18:30:00',
     dayLabel: 'Next 7 days',
-    source: 'Personal',
+    source: 'Basketball',
   },
   {
     id: 'event-7',
@@ -216,7 +204,7 @@ export const mockPriorityItems: PriorityItem[] = [
   {
     id: 'priority-2',
     title: 'Team film review',
-    detail: 'Teamworks event is on today’s schedule.',
+    detail: 'Basketball event is on today’s schedule.',
     level: 'high',
     source: 'Calendar',
   },

@@ -1,6 +1,9 @@
 node_modules/
+.next/
 dist/
 .codex-tools/
 .env
 .env.local
 .DS_Store
+.vercel
+.tools/

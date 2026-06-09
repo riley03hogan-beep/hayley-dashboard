@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Hayley Dashboard',
-  description: 'A personal command-center dashboard for Hayley.',
+  description: 'A morning dashboard for Hayley.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
