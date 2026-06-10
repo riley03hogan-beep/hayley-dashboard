@@ -58,9 +58,9 @@ export function TodaysGamePlan({
   ).length;
 
   return (
-    <section className="mx-auto mb-5 max-w-[1500px] overflow-hidden rounded-xl border border-redbird-500/20 bg-white shadow-soft">
+    <section className="mx-auto mb-3 max-w-[1500px] overflow-hidden rounded-xl border border-redbird-500/20 bg-white shadow-soft sm:mb-5">
       {/* Slim header strip */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 bg-[#fffaf7] px-6 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 bg-[#fffaf7] px-4 py-3 sm:gap-3 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-lg border border-redbird-500/20 bg-white p-1.5 shadow-sm">
             <img
@@ -111,11 +111,11 @@ export function TodaysGamePlan({
       {/* Two-column hero */}
       <div className="grid divide-y divide-stone-100 lg:grid-cols-2 lg:divide-x lg:divide-y-0">
         {/* LEFT: GET DONE TODAY */}
-        <div className="p-6 lg:p-8">
-          <p className="mb-5 text-xs font-extrabold uppercase tracking-widest text-stone-400">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-stone-400 sm:mb-4">
             Get done today
           </p>
-          <div className="grid gap-3">
+          <div className="grid gap-2 sm:gap-3">
             {priorities.length ? (
               priorities.map((item) => <HeroPriorityCard item={item} key={item.id} />)
             ) : (
@@ -124,7 +124,7 @@ export function TodaysGamePlan({
               </p>
             )}
           </div>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
             <QuickStat
               accent
               label={todayWorkloadMinutes === 0 ? 'no work today' : 'time required today'}
@@ -138,12 +138,12 @@ export function TodaysGamePlan({
         </div>
 
         {/* RIGHT: TODAY'S SCHEDULE */}
-        <div className="p-6 lg:p-8">
-          <p className="mb-5 text-xs font-extrabold uppercase tracking-widest text-stone-400">
+        <div className="p-4 sm:p-6 lg:p-8">
+          <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-stone-400 sm:mb-4">
             Today&apos;s schedule
           </p>
           {todayEvents.length ? (
-            <div className="grid gap-3">
+            <div className="grid gap-2 sm:gap-3">
               {todayEvents.slice(0, 5).map((event) => (
                 <HeroEventRow event={event} key={event.id} />
               ))}
@@ -151,7 +151,7 @@ export function TodaysGamePlan({
           ) : (
             <p className="text-sm font-semibold text-stone-500">No calendar events today.</p>
           )}
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-2 sm:mt-6 sm:gap-3">
             <QuickStat
               label={unreadCount === 1 ? 'unread email' : 'unread emails'}
               value={String(unreadCount)}
@@ -198,15 +198,15 @@ function HeroPriorityCard({ item }: { item: RankedPriority }) {
       rel="noopener noreferrer"
       target="_blank"
     >
-      <div className="flex items-start justify-between gap-3">
-        <h3 className="text-xl font-black leading-tight text-ink">{item.title}</h3>
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-base font-black leading-tight text-ink sm:text-xl">{item.title}</h3>
         {badge && (
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-black ${badgeClass}`}>
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black sm:px-2.5 sm:py-1 sm:text-xs ${badgeClass}`}>
             {badge}
           </span>
         )}
       </div>
-      <p className="mt-1.5 text-sm font-semibold text-stone-600">{item.detail}</p>
+      <p className="mt-1 text-xs font-semibold text-stone-600 sm:mt-1.5 sm:text-sm">{item.detail}</p>
     </a>
   );
 }
@@ -216,20 +216,20 @@ function HeroEventRow({ event }: { event: CalendarEvent }) {
   const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
   return (
     <a
-      className="flex items-center gap-4 rounded-lg border border-stone-100 bg-stone-50 px-4 py-3 transition-colors hover:bg-stone-100"
+      className="flex items-center gap-2 rounded-lg border border-stone-100 bg-stone-50 px-3 py-2.5 transition-colors hover:bg-stone-100 sm:gap-4 sm:px-4 sm:py-3"
       href={href}
       rel="noopener noreferrer"
       target="_blank"
     >
-      <time className="w-20 shrink-0 text-lg font-black text-redbird-600">{formatTime(event.start)}</time>
+      <time className="w-14 shrink-0 text-sm font-black text-redbird-600 sm:w-20 sm:text-lg">{formatTime(event.start)}</time>
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-base font-black text-ink">{event.title}</h3>
+        <h3 className="truncate text-sm font-black text-ink sm:text-base">{event.title}</h3>
         {event.location && (
-          <p className="mt-0.5 truncate text-sm text-stone-500">{event.location}</p>
+          <p className="mt-0.5 truncate text-xs text-stone-500 sm:text-sm">{event.location}</p>
         )}
       </div>
       {isBasketball && (
-        <span className="ml-auto shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-700">
+        <span className="ml-auto shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-black text-emerald-700 sm:px-2.5 sm:py-1 sm:text-xs">
           Basketball
         </span>
       )}
@@ -247,11 +247,11 @@ function QuickStat({
   value: string;
 }) {
   return (
-    <div className="rounded-lg bg-stone-100 px-4 py-2.5">
-      <span className={`text-2xl font-black ${accent ? 'text-redbird-600' : 'text-ink'}`}>
+    <div className="rounded-lg bg-stone-100 px-3 py-2 sm:px-4 sm:py-2.5">
+      <span className={`text-xl font-black sm:text-2xl ${accent ? 'text-redbird-600' : 'text-ink'}`}>
         {value}
       </span>
-      <span className="ml-2 text-sm font-semibold text-stone-600">{label}</span>
+      <span className="ml-1.5 text-xs font-semibold text-stone-600 sm:ml-2 sm:text-sm">{label}</span>
     </div>
   );
 }
@@ -506,10 +506,10 @@ function DashboardCard({
   title: string;
 }) {
   return (
-    <section className="rounded-lg border border-stone-200 bg-paper/95 p-5 shadow-soft">
+    <section className="rounded-lg border border-stone-200 bg-paper/95 p-4 shadow-soft sm:p-5">
       <p className="text-xs font-extrabold uppercase tracking-wider text-redbird-600">{eyebrow}</p>
-      <h2 className="mt-1 text-2xl font-black leading-tight text-ink">{title}</h2>
-      <div className="mt-4">{children}</div>
+      <h2 className="mt-1 text-xl font-black leading-tight text-ink sm:text-2xl">{title}</h2>
+      <div className="mt-3 sm:mt-4">{children}</div>
     </section>
   );
 }
@@ -560,7 +560,7 @@ function AssignmentRow({
 }) {
   return (
     <a
-      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-4'}`}
+      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-3 sm:p-4'}`}
       href={assignment.canvasUrl || LINKS.canvas}
       rel="noopener noreferrer"
       target="_blank"
@@ -585,7 +585,7 @@ function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: 
   const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
   return (
     <a
-      className={`grid gap-2 rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-4'} sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:items-center`}
+      className={`grid gap-2 rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-3 sm:p-4'} sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:items-center`}
       href={href}
       rel="noopener noreferrer"
       target="_blank"
@@ -619,7 +619,7 @@ function getEmailLink(email: EmailMessage): string {
 function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailMessage }) {
   return (
     <a
-      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-4'}`}
+      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-3 sm:p-4'}`}
       href={getEmailLink(email)}
       rel="noopener noreferrer"
       target="_blank"

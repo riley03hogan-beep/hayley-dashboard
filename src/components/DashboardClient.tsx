@@ -104,7 +104,7 @@ export function DashboardClient({ today }: { today: string }) {
   );
 
   return (
-    <main className="min-h-screen bg-[#f7f3ee] bg-[linear-gradient(135deg,rgba(206,17,38,0.08),transparent_34%),linear-gradient(180deg,#fffdf9_0%,#f7f3ee_100%)] px-4 py-5 text-ink sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f7f3ee] bg-[linear-gradient(135deg,rgba(206,17,38,0.08),transparent_34%),linear-gradient(180deg,#fffdf9_0%,#f7f3ee_100%)] px-3 py-3 text-ink sm:px-4 sm:py-5 lg:px-8">
       <TodaysGamePlan
         assignments={assignments}
         connected={dashboard.connected}
@@ -128,17 +128,17 @@ export function DashboardClient({ today }: { today: string }) {
         </p>
       ) : null}
 
-      <div className="mx-auto grid max-w-[1500px] gap-5">
-        <div className="grid gap-5 lg:grid-cols-2">
+      <div className="mx-auto grid max-w-[1500px] gap-3 sm:gap-5">
+        <div className="grid gap-3 sm:gap-5 lg:grid-cols-2">
           <ResponsibilitySections assignments={assignments} emails={emails} events={events} />
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="grid gap-3 sm:gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <TomorrowPrep assignments={assignments} events={events} />
           <InboxRequiringAction emails={emails} />
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-3 sm:gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <UpcomingThisWeek assignments={assignments} events={events} weekWorkloadMinutes={weekWorkloadMinutes} />
           <WaitingOn items={mockWaitingOn} />
         </div>
