@@ -499,9 +499,10 @@ export function UpcomingThisWeek({
   );
 
   // Merge tomorrow events and assignments, sorted chronologically
+  // Canvas deadlines often use midnight timestamps — push them to end of day for sorting
   const tomorrowItems = [
     ...tomorrowEvents.map((e) => ({ id: `event-${e.id}`, time: new Date(e.start).getTime(), type: 'event' as const, data: e })),
-    ...tomorrowAssignments.map((a) => ({ id: `assignment-${a.id}`, time: a.dueAt ? new Date(a.dueAt).getTime() : Infinity, type: 'assignment' as const, data: a })),
+    ...tomorrowAssignments.map((a) => ({ id: `assignment-${a.id}`, time: sortableAssignmentTime(a), type: 'assignment' as const, data: a })),
   ].sort((a, b) => a.time - b.time);
 
   return (
@@ -546,7 +547,7 @@ export function UpcomingAfterTomorrow({
   // Merge and sort all future items chronologically
   const futureItems = [
     ...futureEvents.map((e) => ({ id: `event-${e.id}`, time: new Date(e.start).getTime(), type: 'event' as const, data: e })),
-    ...futureAssignments.map((a) => ({ id: `assignment-${a.id}`, time: a.dueAt ? new Date(a.dueAt).getTime() : Infinity, type: 'assignment' as const, data: a })),
+    ...futureAssignments.map((a) => ({ id: `assignment-${a.id}`, time: sortableAssignmentTime(a), type: 'assignment' as const, data: a })),
   ].sort((a, b) => a.time - b.time);
 
   // Group by calendar day
@@ -695,6 +696,16 @@ function AssignmentRow({
 function isAllDayEvent(start: string): boolean {
   const d = new Date(start);
   return d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+}
+
+// Canvas deadlines often have midnight timestamps — sort them at 11:59 PM so they appear after timed events
+function sortableAssignmentTime(a: Assignment): number {
+  if (!a.dueAt) return Infinity;
+  const d = new Date(a.dueAt);
+  if (d.getHours() === 0 && d.getMinutes() === 0) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59).getTime();
+  }
+  return d.getTime();
 }
 
 function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: boolean }) {
