@@ -244,6 +244,33 @@ function cleanEventTitle(title: string): string {
   return title.replace(/\[[^\]]+\]/g, '').replace(/\s+/g, ' ').trim() || title;
 }
 
+// Extract display name from "Name <email>" or "LAST, FIRST <email>" format
+function cleanFrom(from: string): string {
+  const match = from.match(/^["']?([^"'<]+)["']?\s*(?:<[^>]*>)?$/);
+  return match ? match[1].trim() : from;
+}
+
+// Decode HTML entities, strip forwarding headers, collapse whitespace
+function cleanSnippet(snippet: string): string {
+  let clean = snippet
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+  // Strip forwarding header lines (From:, To:, Sent:, etc.)
+  clean = clean.replace(/\b(?:From|To|Sent|Subject|Date|CC|BCC):[^\n\r]*/gi, '');
+  clean = clean.replace(/\s+/g, ' ').trim();
+  if (clean.length > 130) clean = `${clean.slice(0, 129)}…`;
+  return clean || snippet;
+}
+
+// Strip Re:/Fw:/Fwd: prefixes from subjects
+function cleanSubject(subject: string): string {
+  return subject.replace(/^(?:(?:RE|FW|FWD):\s*)+/i, '').trim();
+}
+
 function HeroEventRow({ event }: { event: CalendarEvent }) {
   const isBasketball = event.source === 'Basketball' || event.source === 'Teamworks';
   const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
@@ -391,7 +418,7 @@ export function TomorrowPrep({
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-stone-500">First event</p>
           <p className="mt-1 text-base font-black text-ink">
-            {firstEvent ? firstEvent.title : 'Nothing scheduled'}
+            {firstEvent ? cleanEventTitle(firstEvent.title) : 'Nothing scheduled'}
           </p>
           <p className="mt-1 text-sm text-stone-600">
             {firstEvent ? formatTime(firstEvent.start) : 'No calendar item found'}
@@ -680,7 +707,7 @@ function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailM
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide text-stone-500">
-          {email.from}
+          {cleanFrom(email.from)}
         </span>
         {email.unread ? (
           <span className="rounded-full bg-redbird-500 px-2 py-0.5 text-[11px] font-black text-white">
@@ -688,9 +715,9 @@ function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailM
           </span>
         ) : null}
       </div>
-      <h3 className="mt-1 text-sm font-black text-ink">{email.subject}</h3>
+      <h3 className="mt-1 text-sm font-black text-ink">{cleanSubject(email.subject)}</h3>
       {!compact ? (
-        <p className="mt-1 text-sm leading-snug text-stone-600">{email.snippet}</p>
+        <p className="mt-1 text-sm leading-snug text-stone-600">{cleanSnippet(email.snippet)}</p>
       ) : null}
     </a>
   );
