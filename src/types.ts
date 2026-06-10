@@ -1,4 +1,3 @@
-export type PriorityLevel = 'high' | 'medium' | 'low';
 export type EventSource = 'Teamworks' | 'Canvas' | 'Basketball' | 'Personal';
 export type TaskStatus = 'Due Soon' | 'Upcoming' | 'Overdue' | 'Done';
 export type TodoCategory = 'School' | 'Basketball' | 'Personal' | 'Admin' | 'Urgent';
@@ -12,13 +11,6 @@ export type EmailCategory =
   | 'Travel'
   | 'Meetings'
   | 'General';
-
-export interface QuickLink {
-  title: string;
-  description: string;
-  href: string;
-  initials: string;
-}
 
 export interface EmailMessage {
   id: string;
@@ -48,14 +40,8 @@ export interface Assignment {
   dueDate: string;
   status: TaskStatus;
   canvasUrl: string;
-}
-
-export interface PriorityItem {
-  id: string;
-  title: string;
-  detail: string;
-  level: PriorityLevel;
-  source: string;
+  estimatedMinutes: number;
+  dueAt?: string;
 }
 
 export interface TodoItem {
@@ -76,4 +62,11 @@ export interface SetupStatusItem {
   label: string;
   connected: boolean;
   note: string;
+}
+
+export interface WaitingItem {
+  id: string;
+  title: string;
+  owner: string;
+  nextCheck: string;
 }

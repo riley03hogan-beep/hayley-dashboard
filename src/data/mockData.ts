@@ -2,50 +2,32 @@ import type {
   Assignment,
   CalendarEvent,
   EmailMessage,
-  PriorityItem,
-  QuickLink,
   SetupStatusItem,
+  WaitingItem,
 } from '../types';
 
-export const quickLinks: QuickLink[] = [
-  {
-    title: 'Gmail',
-    description: 'Forwarded school emails and Canvas notifications',
-    href: 'https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox',
-    initials: 'GM',
-  },
-  {
-    title: 'Google Calendar',
-    description: 'Basketball schedule and Canvas deadlines',
-    href: 'https://calendar.google.com/calendar/u/0/r/week',
-    initials: 'GC',
-  },
-  {
-    title: 'Canvas',
-    description: 'Classes, assignments and course updates',
-    href: 'https://canvas.illinoisstate.edu/courses',
-    initials: 'CV',
-  },
-  {
-    title: 'Teamworks',
-    description: 'Basketball schedule, team events and travel',
-    href: 'https://www.teamworksapp.com/home/overview',
-    initials: 'TW',
-  },
-  {
-    title: 'Outlook',
-    description: 'Original Illinois State inbox',
-    href: 'https://outlook.cloud.microsoft/mail/inbox',
-    initials: 'OU',
-  },
-];
+const todayAt = (hour: number, minute = 0) => dateAt(0, hour, minute);
+const tomorrowAt = (hour: number, minute = 0) => dateAt(1, hour, minute);
+const daysFromNowAt = (days: number, hour: number, minute = 0) => dateAt(days, hour, minute);
+
+function dateAt(daysFromNow: number, hour: number, minute: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  date.setHours(hour, minute, 0, 0);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:00`;
+}
 
 export const mockEmails: EmailMessage[] = [
   {
     id: 'email-1',
-    from: 'Canvas Notifications',
-    subject: 'Assignment due tomorrow: Facility Operations Reflection',
-    snippet: 'Reminder that your reflection is due by 11:59 PM tomorrow.',
+    from: 'SPM 451 Instructor',
+    subject: 'Article Analysis due today',
+    snippet: 'Reminder that your article analysis is due by 11:59 PM tonight.',
     receivedAt: '8:14 AM',
     unread: true,
     important: true,
@@ -96,62 +78,62 @@ export const mockEmails: EmailMessage[] = [
 export const mockEvents: CalendarEvent[] = [
   {
     id: 'event-1',
-    title: 'Sport Management Seminar',
-    start: '2026-06-08T10:00:00',
-    end: '2026-06-08T11:15:00',
+    title: 'Kids Camp',
+    start: todayAt(9),
+    end: todayAt(11),
     dayLabel: 'Today',
-    source: 'Canvas',
-    location: 'Zoom',
+    source: 'Basketball',
+    location: 'CEFCU Arena',
   },
   {
     id: 'event-2',
-    title: 'Team film review',
-    start: '2026-06-08T13:00:00',
-    end: '2026-06-08T14:00:00',
+    title: 'Weights',
+    start: todayAt(12),
+    end: todayAt(13),
     dayLabel: 'Today',
     source: 'Basketball',
-    location: 'Basketball office',
+    location: 'Performance center',
   },
   {
     id: 'event-3',
     title: 'Practice',
-    start: '2026-06-08T15:30:00',
-    end: '2026-06-08T17:30:00',
+    start: todayAt(15, 30),
+    end: todayAt(17, 30),
     dayLabel: 'Today',
     source: 'Basketball',
     location: 'CEFCU Arena',
   },
   {
     id: 'event-4',
-    title: 'Travel roster deadline',
-    start: '2026-06-09T09:30:00',
-    end: '2026-06-09T10:00:00',
+    title: 'Recruiting admin check-in',
+    start: tomorrowAt(9, 30),
+    end: tomorrowAt(10),
     dayLabel: 'Tomorrow',
     source: 'Basketball',
     location: 'Basketball office',
   },
   {
     id: 'event-5',
-    title: 'Assignment check-in',
-    start: '2026-06-09T14:00:00',
-    end: '2026-06-09T14:30:00',
+    title: 'Nutrition talk notes review',
+    start: tomorrowAt(14),
+    end: tomorrowAt(14, 30),
     dayLabel: 'Tomorrow',
-    source: 'Canvas',
+    source: 'Basketball',
     location: 'Online',
   },
   {
     id: 'event-6',
     title: 'Review scouting notes',
-    start: '2026-06-10T18:00:00',
-    end: '2026-06-10T18:30:00',
+    start: daysFromNowAt(2, 18),
+    end: daysFromNowAt(2, 18, 30),
     dayLabel: 'Next 7 days',
     source: 'Basketball',
   },
   {
     id: 'event-7',
     title: 'Recruiting admin block',
-    start: '2026-06-12T11:00:00',
-    end: '2026-06-12T12:00:00',
+    start: daysFromNowAt(4, 11),
+    end: daysFromNowAt(4, 12),
     dayLabel: 'Next 7 days',
     source: 'Basketball',
     location: 'Basketball office',
@@ -161,19 +143,23 @@ export const mockEvents: CalendarEvent[] = [
 export const mockAssignments: Assignment[] = [
   {
     id: 'assignment-1',
-    title: 'Facility Operations Reflection',
+    title: 'Article Analysis',
     course: 'SPM 451',
-    dueDate: 'Tomorrow, 11:59 PM',
+    dueDate: 'Today, 11:59 PM',
     status: 'Due Soon',
     canvasUrl: 'https://canvas.illinoisstate.edu/courses',
+    estimatedMinutes: 90,
+    dueAt: todayAt(23, 59),
   },
   {
     id: 'assignment-2',
     title: 'Leadership Discussion Reply',
     course: 'SPM 404',
-    dueDate: 'Friday, 5:00 PM',
+    dueDate: 'Tomorrow, 5:00 PM',
     status: 'Upcoming',
     canvasUrl: 'https://canvas.illinoisstate.edu/courses',
+    estimatedMinutes: 20,
+    dueAt: tomorrowAt(17),
   },
   {
     id: 'assignment-3',
@@ -182,45 +168,39 @@ export const mockAssignments: Assignment[] = [
     dueDate: 'Yesterday',
     status: 'Overdue',
     canvasUrl: 'https://canvas.illinoisstate.edu/courses',
+    estimatedMinutes: 45,
+    dueAt: daysFromNowAt(-1, 23, 59),
   },
   {
     id: 'assignment-4',
-    title: 'Event Revenue Worksheet',
+    title: 'Sport Team Report',
     course: 'SPM 462',
-    dueDate: 'Next Wednesday, 8:00 PM',
-    status: 'Done',
+    dueDate: 'Friday, 8:00 PM',
+    status: 'Upcoming',
     canvasUrl: 'https://canvas.illinoisstate.edu/courses',
+    estimatedMinutes: 180,
+    dueAt: daysFromNowAt(3, 20),
   },
 ];
 
-export const mockPriorityItems: PriorityItem[] = [
+export const mockWaitingOn: WaitingItem[] = [
   {
-    id: 'priority-1',
-    title: 'Confirm travel roster',
-    detail: 'Email says action needed before noon.',
-    level: 'high',
-    source: 'Gmail',
+    id: 'waiting-1',
+    title: 'Housing approval',
+    owner: 'Housing office',
+    nextCheck: 'Check Friday',
   },
   {
-    id: 'priority-2',
-    title: 'Team film review',
-    detail: 'Basketball event is on today’s schedule.',
-    level: 'high',
-    source: 'Calendar',
+    id: 'waiting-2',
+    title: 'Scholarship disbursement',
+    owner: 'Financial aid',
+    nextCheck: 'Check next business day',
   },
   {
-    id: 'priority-3',
-    title: 'Facility Operations Reflection',
-    detail: 'Canvas assignment due tomorrow.',
-    level: 'medium',
-    source: 'Canvas',
-  },
-  {
-    id: 'priority-4',
-    title: 'Scan urgent Gmail items',
-    detail: 'Canvas and Illinois State messages are forwarded into Gmail.',
-    level: 'medium',
-    source: 'Gmail',
+    id: 'waiting-3',
+    title: 'Coach response on camp schedule',
+    owner: 'Coach staff',
+    nextCheck: 'Follow up after practice',
   },
 ];
 
