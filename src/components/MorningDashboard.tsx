@@ -211,6 +211,10 @@ function HeroPriorityCard({ item }: { item: RankedPriority }) {
   );
 }
 
+function cleanEventTitle(title: string): string {
+  return title.replace(/\[[^\]]+\]/g, '').replace(/\s+/g, ' ').trim() || title;
+}
+
 function HeroEventRow({ event }: { event: CalendarEvent }) {
   const isBasketball = event.source === 'Basketball' || event.source === 'Teamworks';
   const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
@@ -223,7 +227,7 @@ function HeroEventRow({ event }: { event: CalendarEvent }) {
     >
       <time className="w-14 shrink-0 text-sm font-black text-redbird-600 sm:w-20 sm:text-lg">{formatTime(event.start)}</time>
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-black text-ink sm:text-base">{event.title}</h3>
+        <h3 className="truncate text-sm font-black text-ink sm:text-base">{cleanEventTitle(event.title)}</h3>
         {event.location && (
           <p className="mt-0.5 truncate text-xs text-stone-500 sm:text-sm">{event.location}</p>
         )}
@@ -592,7 +596,7 @@ function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: 
     >
       <time className="text-sm font-black text-redbird-600">{formatTime(event.start)}</time>
       <div>
-        <h3 className="text-sm font-black text-ink">{event.title}</h3>
+        <h3 className="text-sm font-black text-ink">{cleanEventTitle(event.title)}</h3>
         <p className="mt-0.5 text-sm text-stone-600">{event.location ?? 'No location listed'}</p>
       </div>
       <span

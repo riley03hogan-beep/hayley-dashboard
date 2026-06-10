@@ -183,26 +183,7 @@ export const mockAssignments: Assignment[] = [
   },
 ];
 
-export const mockWaitingOn: WaitingItem[] = [
-  {
-    id: 'waiting-1',
-    title: 'Housing approval',
-    owner: 'Housing office',
-    nextCheck: 'Check Friday',
-  },
-  {
-    id: 'waiting-2',
-    title: 'Scholarship disbursement',
-    owner: 'Financial aid',
-    nextCheck: 'Check next business day',
-  },
-  {
-    id: 'waiting-3',
-    title: 'Coach response on camp schedule',
-    owner: 'Coach staff',
-    nextCheck: 'Follow up after practice',
-  },
-];
+export const mockWaitingOn: WaitingItem[] = [];
 
 export const setupStatusItems: SetupStatusItem[] = [
   {
