@@ -9,12 +9,12 @@ import {
   ResponsibilitySections,
   TodaysGamePlan,
   TomorrowPrep,
+  UpcomingAfterTomorrow,
   UpcomingThisWeek,
-  WaitingOn,
   type RankedPriority,
 } from '@/components/MorningDashboard';
 import { DoneItemsProvider } from '@/context/DoneItemsContext';
-import { mockAssignments, mockEmails, mockEvents, mockWaitingOn, setupStatusItems } from '@/data/mockData';
+import { mockAssignments, mockEmails, mockEvents, setupStatusItems } from '@/data/mockData';
 import type { DashboardPayload } from '@/lib/google';
 import type { Assignment, CalendarEvent, EmailMessage } from '@/types';
 
@@ -161,9 +161,9 @@ export function DashboardClient({ today: _today }: { today: string }) {
           <InboxRequiringAction emails={emails} />
         </div>
 
-        <div className="grid gap-3 sm:gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="grid gap-3 sm:gap-5 lg:grid-cols-2">
           <UpcomingThisWeek assignments={assignments} events={events} weekWorkloadMinutes={weekWorkloadMinutes} />
-          <WaitingOn items={mockWaitingOn} />
+          <UpcomingAfterTomorrow assignments={assignments} events={events} />
         </div>
       </div>
     </main>

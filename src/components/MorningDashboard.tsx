@@ -389,9 +389,16 @@ export function ResponsibilitySections({
     <>
       <DashboardCard eyebrow="Student" title="Class work and Canvas">
         <div className="grid gap-3">
-          {assignments.slice(0, 5).map((assignment) => (
-            <AssignmentRow assignment={assignment} key={assignment.id} />
-          ))}
+          {[...assignments]
+            .sort((a, b) => {
+              const aTime = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
+              const bTime = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
+              return aTime - bTime;
+            })
+            .slice(0, 5)
+            .map((assignment) => (
+              <AssignmentRow assignment={assignment} key={assignment.id} />
+            ))}
           {studentEmails.slice(0, 2).map((email) => (
             <EmailRow email={email} key={email.id} />
           ))}
@@ -499,71 +506,74 @@ export function UpcomingThisWeek({
   weekWorkloadMinutes: number;
 }) {
   const tomorrowEvents = events.filter((event) => event.dayLabel === 'Tomorrow');
-  const upcomingEvents = events.filter((event) => event.dayLabel === 'Next 7 days');
-  const upcomingAssignments = assignments.filter(
-    (assignment) => assignment.status !== 'Done' && !isDueToday(assignment),
+  const tomorrowAssignments = assignments.filter(
+    (assignment) => assignment.status !== 'Done' && isDueTomorrow(assignment),
   );
 
+  // Merge tomorrow events and assignments, sorted chronologically
+  const tomorrowItems = [
+    ...tomorrowEvents.map((e) => ({ id: `event-${e.id}`, time: new Date(e.start).getTime(), type: 'event' as const, data: e })),
+    ...tomorrowAssignments.map((a) => ({ id: `assignment-${a.id}`, time: a.dueAt ? new Date(a.dueAt).getTime() : Infinity, type: 'assignment' as const, data: a })),
+  ].sort((a, b) => a.time - b.time);
+
   return (
-    <DashboardCard eyebrow="This week" title="Upcoming">
+    <DashboardCard eyebrow="This week" title="Tomorrow">
       <div className="mb-4 rounded-lg bg-stone-50 p-3">
         <p className="text-xs font-bold uppercase tracking-wide text-stone-500">
           Total workload remaining this week
         </p>
         <p className="mt-1 text-2xl font-black text-ink">{formatDuration(weekWorkloadMinutes)}</p>
       </div>
-      <div className="grid gap-3">
-        <details className="rounded-lg border border-stone-200 bg-white p-4" open>
-          <summary className="cursor-pointer text-sm font-black text-ink">Tomorrow</summary>
-          <div className="mt-3 grid gap-2">
-            {[...tomorrowEvents, ...upcomingAssignments.filter(isDueTomorrow)]
-              .slice(0, 5)
-              .map((item) =>
-                'course' in item ? (
-                  <AssignmentRow assignment={item} key={item.id} />
-                ) : (
-                  <EventRow event={item} key={item.id} />
-                ),
-              )}
-          </div>
-        </details>
-        <details className="rounded-lg border border-stone-200 bg-white p-4">
-          <summary className="cursor-pointer text-sm font-black text-ink">
-            Upcoming after tomorrow
-          </summary>
-          <div className="mt-3 grid gap-2">
-            {[
-              ...upcomingEvents,
-              ...upcomingAssignments.filter((assignment) => !isDueTomorrow(assignment)),
-            ]
-              .slice(0, 8)
-              .map((item) =>
-                'course' in item ? (
-                  <AssignmentRow assignment={item} key={item.id} />
-                ) : (
-                  <EventRow event={item} key={item.id} />
-                ),
-              )}
-          </div>
-        </details>
+      <div className="grid gap-2 sm:gap-3">
+        {tomorrowItems.length ? (
+          tomorrowItems.map((item) =>
+            item.type === 'event' ? (
+              <EventRow event={item.data as CalendarEvent} key={item.id} />
+            ) : (
+              <AssignmentRow assignment={item.data as Assignment} key={item.id} />
+            ),
+          )
+        ) : (
+          <EmptyState message="Nothing due or scheduled tomorrow." />
+        )}
       </div>
     </DashboardCard>
   );
 }
 
-export function WaitingOn({ items }: { items: WaitingItem[] }) {
+export function UpcomingAfterTomorrow({
+  assignments,
+  events,
+}: {
+  assignments: Assignment[];
+  events: CalendarEvent[];
+}) {
+  const futureEvents = events.filter((event) => event.dayLabel === 'Next 7 days');
+  const futureAssignments = assignments.filter(
+    (assignment) =>
+      assignment.status !== 'Done' && !isDueToday(assignment) && !isDueTomorrow(assignment),
+  );
+
+  // Merge and sort all future items chronologically
+  const futureItems = [
+    ...futureEvents.map((e) => ({ id: `event-${e.id}`, time: new Date(e.start).getTime(), type: 'event' as const, data: e })),
+    ...futureAssignments.map((a) => ({ id: `assignment-${a.id}`, time: a.dueAt ? new Date(a.dueAt).getTime() : Infinity, type: 'assignment' as const, data: a })),
+  ].sort((a, b) => a.time - b.time);
+
   return (
-    <DashboardCard eyebrow="Not actionable yet" title="Waiting On">
-      <div className="grid gap-3">
-        {items.map((item) => (
-          <article className="rounded-lg border border-stone-200 bg-white p-4" key={item.id}>
-            <h3 className="text-sm font-black text-ink">{item.title}</h3>
-            <p className="mt-1 text-sm text-stone-600">{item.owner}</p>
-            <p className="mt-2 text-xs font-bold uppercase tracking-wide text-stone-500">
-              {item.nextCheck}
-            </p>
-          </article>
-        ))}
+    <DashboardCard eyebrow="Rest of week" title="Coming Up">
+      <div className="grid gap-2 sm:gap-3">
+        {futureItems.length ? (
+          futureItems.map((item) =>
+            item.type === 'event' ? (
+              <EventRow event={item.data as CalendarEvent} key={item.id} />
+            ) : (
+              <AssignmentRow assignment={item.data as Assignment} key={item.id} />
+            ),
+          )
+        ) : (
+          <EmptyState message="Nothing else coming up this week." />
+        )}
       </div>
     </DashboardCard>
   );
