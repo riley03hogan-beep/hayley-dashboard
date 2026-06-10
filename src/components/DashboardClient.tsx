@@ -7,9 +7,7 @@ import {
   isDueTomorrow,
   ResponsibilitySections,
   TodaysGamePlan,
-  TodaysTimeline,
   TomorrowPrep,
-  TopPriorities,
   UpcomingThisWeek,
   WaitingOn,
   type RankedPriority,
@@ -130,11 +128,6 @@ export function DashboardClient({ today }: { today: string }) {
       ) : null}
 
       <div className="mx-auto grid max-w-[1500px] gap-5">
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <TopPriorities priorities={priorities} />
-          <TodaysTimeline events={events} />
-        </div>
-
         <div className="grid gap-5 lg:grid-cols-2">
           <ResponsibilitySections assignments={assignments} emails={emails} events={events} />
         </div>
