@@ -6,7 +6,7 @@ export const LINKS = {
   teamworks: 'https://www.teamworksapp.com/home/overview',
   googleCalendar: 'https://calendar.google.com/calendar/u/0/r/week',
   gmail: 'https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox',
-  outlook: 'https://outlook.cloud.microsoft/mail/inbox/',
+  outlook: 'https://outlook.cloud.microsoft/mail/inbox/id/AAQkADIyMWVjZTQ2LWI3Y2YtNGE3OC04ZmYzLWVhN2I1MjFmMTU0MAAQABuHs%2BlVw81Hr0sONTTU%2BYs%3D?culture=en-us&country=us',
 } as const;
 
 export interface RankedPriority {
@@ -604,10 +604,16 @@ function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: 
   );
 }
 
+// Forwarded school emails (Illinois State / Canvas) → Outlook inbox
+// Everything else → Gmail
 function getEmailLink(email: EmailMessage): string {
-  if (['Basketball', 'Travel', 'Meetings'].includes(email.category)) return LINKS.teamworks;
-  if (['Assignments', 'Canvas', 'Illinois State'].includes(email.category)) return LINKS.outlook;
-  return LINKS.gmail;
+  const isForwardedSchoolEmail =
+    ['Assignments', 'Canvas', 'Illinois State'].includes(email.category) ||
+    email.from.toLowerCase().includes('instructor') ||
+    email.from.toLowerCase().includes('professor') ||
+    email.from.toLowerCase().includes('illinois state') ||
+    email.from.toLowerCase().includes('canvas');
+  return isForwardedSchoolEmail ? LINKS.outlook : LINKS.gmail;
 }
 
 function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailMessage }) {

@@ -190,11 +190,7 @@ function buildTopPriorities({
       detail: `${email.from} · ${shortText(email.snippet, 110)}`,
       score: isProfessorEmail(email) && email.unread ? 40 : 10,
       source: 'Inbox' as const,
-      href: ['Basketball', 'Travel', 'Meetings'].includes(email.category)
-        ? LINKS.teamworks
-        : ['Assignments', 'Canvas', 'Illinois State'].includes(email.category)
-          ? LINKS.outlook
-          : LINKS.gmail,
+      href: isForwardedSchoolEmail(email) ? LINKS.outlook : LINKS.gmail,
     }));
 
   return [...assignmentPriorities, ...basketballPriorities, ...emailPriorities]
@@ -267,6 +263,16 @@ function getActionEmails(emails: EmailMessage[]) {
 function isProfessorEmail(email: EmailMessage) {
   const value = `${email.from} ${email.subject}`.toLowerCase();
   return ['professor', 'instructor', 'faculty', 'spm ', 'canvas'].some((keyword) => value.includes(keyword));
+}
+
+function isForwardedSchoolEmail(email: EmailMessage) {
+  return (
+    ['Assignments', 'Canvas', 'Illinois State'].includes(email.category) ||
+    email.from.toLowerCase().includes('instructor') ||
+    email.from.toLowerCase().includes('professor') ||
+    email.from.toLowerCase().includes('illinois state') ||
+    email.from.toLowerCase().includes('canvas')
+  );
 }
 
 function byStartTime(a: CalendarEvent, b: CalendarEvent) {
