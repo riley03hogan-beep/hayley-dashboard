@@ -1,5 +1,8 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import type { Assignment, CalendarEvent, EmailMessage, WaitingItem } from '@/types';
+import { useDoneItems } from '@/context/DoneItemsContext';
 
 export const LINKS = {
   canvas: 'https://canvas.illinoisstate.edu/courses',
@@ -16,6 +19,7 @@ export interface RankedPriority {
   score: number;
   source: 'Student' | 'Coach' | 'Inbox';
   href: string;
+  doneKey: string; // shared key with the source item for cross-off sync
 }
 
 interface GamePlanProps {
@@ -165,6 +169,9 @@ export function TodaysGamePlan({
 }
 
 function HeroPriorityCard({ item }: { item: RankedPriority }) {
+  const { doneIds, toggleDone } = useDoneItems();
+  const isDone = doneIds.has(item.doneKey);
+
   const isOverdue = item.score >= 100;
   const isTodayDue = item.score >= 90;
   const isBasketball = item.source === 'Coach';
@@ -192,22 +199,44 @@ function HeroPriorityCard({ item }: { item: RankedPriority }) {
       : 'bg-emerald-500 text-white';
 
   return (
-    <a
-      className={`block rounded-lg p-4 transition-opacity hover:opacity-80 ${cardClass}`}
-      href={item.href}
-      rel="noopener noreferrer"
-      target="_blank"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base font-black leading-tight text-ink sm:text-xl">{item.title}</h3>
-        {badge && (
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black sm:px-2.5 sm:py-1 sm:text-xs ${badgeClass}`}>
-            {badge}
-          </span>
+    <div className={`flex items-start gap-3 rounded-lg p-4 transition-opacity ${cardClass} ${isDone ? 'opacity-50' : ''}`}>
+      <button
+        aria-label={isDone ? 'Mark incomplete' : 'Mark complete'}
+        className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+          isDone
+            ? 'border-stone-400 bg-stone-400'
+            : 'border-stone-400 bg-transparent hover:border-stone-600'
+        }`}
+        onClick={() => toggleDone(item.doneKey)}
+        type="button"
+      >
+        {isDone && (
+          <svg className="size-3 text-white" fill="none" viewBox="0 0 12 12">
+            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+          </svg>
         )}
-      </div>
-      <p className="mt-1 text-xs font-semibold text-stone-600 sm:mt-1.5 sm:text-sm">{item.detail}</p>
-    </a>
+      </button>
+      <a
+        className="min-w-0 flex-1 hover:opacity-80"
+        href={item.href}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <h3 className={`text-base font-black leading-tight text-ink sm:text-xl ${isDone ? 'line-through' : ''}`}>
+            {item.title}
+          </h3>
+          {badge && (
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-black sm:px-2.5 sm:py-1 sm:text-xs ${badgeClass}`}>
+              {badge}
+            </span>
+          )}
+        </div>
+        <p className={`mt-1 text-xs font-semibold text-stone-600 sm:mt-1.5 sm:text-sm ${isDone ? 'line-through' : ''}`}>
+          {item.detail}
+        </p>
+      </a>
+    </div>
   );
 }
 
@@ -562,25 +591,46 @@ function AssignmentRow({
   assignment: Assignment;
   compact?: boolean;
 }) {
+  const { doneIds, toggleDone } = useDoneItems();
+  const isDone = doneIds.has(assignment.id);
+
   return (
-    <a
-      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-3 sm:p-4'}`}
-      href={assignment.canvasUrl || LINKS.canvas}
-      rel="noopener noreferrer"
-      target="_blank"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <h3 className="text-sm font-black text-ink">{assignment.title}</h3>
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-black ${statusClass[assignment.status]}`}
-        >
-          {assignment.status}
-        </span>
-      </div>
-      <p className="mt-1 text-sm text-stone-600">
-        {assignment.course} · {assignment.dueDate} · {assignment.estimatedMinutes} min
-      </p>
-    </a>
+    <div className={`flex items-start gap-3 rounded-lg border border-stone-200 bg-white transition-colors ${compact ? 'p-3' : 'p-3 sm:p-4'} ${isDone ? 'opacity-50' : ''}`}>
+      <button
+        aria-label={isDone ? 'Mark incomplete' : 'Mark complete'}
+        className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+          isDone
+            ? 'border-stone-400 bg-stone-400'
+            : 'border-stone-400 bg-transparent hover:border-stone-600'
+        }`}
+        onClick={() => toggleDone(assignment.id)}
+        type="button"
+      >
+        {isDone && (
+          <svg className="size-3 text-white" fill="none" viewBox="0 0 12 12">
+            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+          </svg>
+        )}
+      </button>
+      <a
+        className="min-w-0 flex-1 hover:opacity-80"
+        href={assignment.canvasUrl || LINKS.canvas}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <h3 className={`text-sm font-black text-ink ${isDone ? 'line-through' : ''}`}>
+            {assignment.title}
+          </h3>
+          <span className={`rounded-full px-2.5 py-1 text-xs font-black ${statusClass[assignment.status]}`}>
+            {assignment.status}
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-stone-600">
+          {assignment.course} · {assignment.dueDate} · {assignment.estimatedMinutes} min
+        </p>
+      </a>
+    </div>
   );
 }
 

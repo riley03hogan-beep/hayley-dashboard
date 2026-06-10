@@ -13,6 +13,7 @@ import {
   WaitingOn,
   type RankedPriority,
 } from '@/components/MorningDashboard';
+import { DoneItemsProvider } from '@/context/DoneItemsContext';
 import { mockAssignments, mockEmails, mockEvents, mockWaitingOn, setupStatusItems } from '@/data/mockData';
 import type { DashboardPayload } from '@/lib/google';
 import type { Assignment, CalendarEvent, EmailMessage } from '@/types';
@@ -104,6 +105,7 @@ export function DashboardClient({ today }: { today: string }) {
   );
 
   return (
+    <DoneItemsProvider>
     <main className="min-h-screen bg-[#f7f3ee] bg-[linear-gradient(135deg,rgba(206,17,38,0.08),transparent_34%),linear-gradient(180deg,#fffdf9_0%,#f7f3ee_100%)] px-3 py-3 text-ink sm:px-4 sm:py-5 lg:px-8">
       <TodaysGamePlan
         assignments={assignments}
@@ -144,6 +146,7 @@ export function DashboardClient({ today }: { today: string }) {
         </div>
       </div>
     </main>
+    </DoneItemsProvider>
   );
 }
 
@@ -167,6 +170,7 @@ function buildTopPriorities({
         score,
         source: 'Student' as const,
         href: assignment.canvasUrl || LINKS.canvas,
+        doneKey: assignment.id,
       };
     })
     .filter((item) => item.score > 0);
@@ -180,6 +184,7 @@ function buildTopPriorities({
       score: 50,
       source: 'Coach' as const,
       href: LINKS.teamworks,
+      doneKey: event.id,
     }));
 
   const emailPriorities: RankedPriority[] = emails
@@ -191,6 +196,7 @@ function buildTopPriorities({
       score: isProfessorEmail(email) && email.unread ? 40 : 10,
       source: 'Inbox' as const,
       href: isForwardedSchoolEmail(email) ? LINKS.outlook : LINKS.gmail,
+      doneKey: `email-${email.id}`,
     }));
 
   return [...assignmentPriorities, ...basketballPriorities, ...emailPriorities]
