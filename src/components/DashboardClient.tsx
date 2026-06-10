@@ -27,7 +27,18 @@ const initialDashboard: DashboardPayload = {
   setupStatus: setupStatusItems,
 };
 
-export function DashboardClient({ today }: { today: string }) {
+function formatLocalDate() {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(new Date());
+}
+
+export function DashboardClient({ today: _today }: { today: string }) {
+  // Always use client-side date so it reflects the user's local timezone, not the server's UTC
+  const [today, setToday] = useState('');
   const [dashboard, setDashboard] = useState<DashboardPayload>(initialDashboard);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -48,6 +59,16 @@ export function DashboardClient({ today }: { today: string }) {
       setHasLoaded(true);
       if (!quiet) setIsRefreshing(false);
     }
+  }, []);
+
+  // Set date client-side and schedule a refresh at midnight so it stays correct
+  useEffect(() => {
+    setToday(formatLocalDate());
+    const now = new Date();
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const msUntilMidnight = midnight.getTime() - now.getTime();
+    const timer = setTimeout(() => setToday(formatLocalDate()), msUntilMidnight);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
