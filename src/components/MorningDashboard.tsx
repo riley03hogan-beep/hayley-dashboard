@@ -252,23 +252,36 @@ function cleanFrom(from: string): string {
 
 // Decode HTML entities, strip forwarding headers, collapse whitespace
 function cleanSnippet(snippet: string): string {
-  let clean = snippet
+  // Decode HTML entities
+  const decoded = snippet
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, ' ');
-  // Strip forwarding header lines (From:, To:, Sent:, etc.)
-  clean = clean.replace(/\b(?:From|To|Sent|Subject|Date|CC|BCC):[^\n\r]*/gi, '');
-  clean = clean.replace(/\s+/g, ' ').trim();
+  // Strip forwarding header blocks from the start ("From: ... Sent: ... To: ... Subject:")
+  let clean = decoded
+    .replace(/^(?:(?:From|To|Sent|Date|Subject|CC|BCC):\s*[^\n]*\s*)+/gi, '')
+    .replace(/\s*Subject\s*$/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return '';
   if (clean.length > 130) clean = `${clean.slice(0, 129)}…`;
-  return clean || snippet;
+  return clean;
 }
 
-// Strip Re:/Fw:/Fwd: prefixes from subjects
+// Strip Re:/Fw:/Notification: prefixes, course brackets, and Google Calendar suffixes
 function cleanSubject(subject: string): string {
-  return subject.replace(/^(?:(?:RE|FW|FWD):\s*)+/i, '').trim();
+  let clean = subject
+    .replace(/^(?:(?:RE|FW|FWD):\s*)+/i, '')
+    .replace(/^Notification:\s*/i, '')
+    .replace(/\[[^\]]+\]/g, '')
+    .replace(/\s*@\s+\w+\s+\w+\s+\d+.*$/, '')
+    .replace(/\s*\([^)]*[Cc]alendar[^)]*\)\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return clean || subject;
 }
 
 function HeroEventRow({ event }: { event: CalendarEvent }) {
@@ -716,7 +729,7 @@ function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailM
         ) : null}
       </div>
       <h3 className="mt-1 text-sm font-black text-ink">{cleanSubject(email.subject)}</h3>
-      {!compact ? (
+      {!compact && cleanSnippet(email.snippet) ? (
         <p className="mt-1 text-sm leading-snug text-stone-600">{cleanSnippet(email.snippet)}</p>
       ) : null}
     </a>
