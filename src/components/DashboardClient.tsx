@@ -5,6 +5,7 @@ import {
   InboxRequiringAction,
   isDueToday,
   isDueTomorrow,
+  LINKS,
   ResponsibilitySections,
   TodaysGamePlan,
   TomorrowPrep,
@@ -165,6 +166,7 @@ function buildTopPriorities({
         detail: `${assignment.course} · ${assignment.dueDate} · ${assignment.estimatedMinutes} min`,
         score,
         source: 'Student' as const,
+        href: assignment.canvasUrl || LINKS.canvas,
       };
     })
     .filter((item) => item.score > 0);
@@ -177,6 +179,7 @@ function buildTopPriorities({
       detail: `${formatTime(event.start)}${event.location ? ` · ${event.location}` : ''}`,
       score: 50,
       source: 'Coach' as const,
+      href: LINKS.teamworks,
     }));
 
   const emailPriorities: RankedPriority[] = emails
@@ -187,6 +190,11 @@ function buildTopPriorities({
       detail: `${email.from} · ${shortText(email.snippet, 110)}`,
       score: isProfessorEmail(email) && email.unread ? 40 : 10,
       source: 'Inbox' as const,
+      href: ['Basketball', 'Travel', 'Meetings'].includes(email.category)
+        ? LINKS.teamworks
+        : ['Assignments', 'Canvas', 'Illinois State'].includes(email.category)
+          ? LINKS.outlook
+          : LINKS.gmail,
     }));
 
   return [...assignmentPriorities, ...basketballPriorities, ...emailPriorities]

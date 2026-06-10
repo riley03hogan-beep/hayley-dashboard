@@ -1,12 +1,21 @@
 import type { ReactNode } from 'react';
 import type { Assignment, CalendarEvent, EmailMessage, WaitingItem } from '@/types';
 
+export const LINKS = {
+  canvas: 'https://canvas.illinoisstate.edu/courses',
+  teamworks: 'https://www.teamworksapp.com/home/overview',
+  googleCalendar: 'https://calendar.google.com/calendar/u/0/r/week',
+  gmail: 'https://mail.google.com/mail/u/0/?tab=rm&ogbl#inbox',
+  outlook: 'https://outlook.cloud.microsoft/mail/inbox/',
+} as const;
+
 export interface RankedPriority {
   id: string;
   title: string;
   detail: string;
   score: number;
   source: 'Student' | 'Coach' | 'Inbox';
+  href: string;
 }
 
 interface GamePlanProps {
@@ -183,7 +192,12 @@ function HeroPriorityCard({ item }: { item: RankedPriority }) {
       : 'bg-emerald-500 text-white';
 
   return (
-    <article className={`rounded-lg p-4 ${cardClass}`}>
+    <a
+      className={`block rounded-lg p-4 transition-opacity hover:opacity-80 ${cardClass}`}
+      href={item.href}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-xl font-black leading-tight text-ink">{item.title}</h3>
         {badge && (
@@ -193,14 +207,20 @@ function HeroPriorityCard({ item }: { item: RankedPriority }) {
         )}
       </div>
       <p className="mt-1.5 text-sm font-semibold text-stone-600">{item.detail}</p>
-    </article>
+    </a>
   );
 }
 
 function HeroEventRow({ event }: { event: CalendarEvent }) {
   const isBasketball = event.source === 'Basketball' || event.source === 'Teamworks';
+  const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
   return (
-    <article className="flex items-center gap-4 rounded-lg border border-stone-100 bg-stone-50 px-4 py-3">
+    <a
+      className="flex items-center gap-4 rounded-lg border border-stone-100 bg-stone-50 px-4 py-3 transition-colors hover:bg-stone-100"
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
       <time className="w-20 shrink-0 text-lg font-black text-redbird-600">{formatTime(event.start)}</time>
       <div className="min-w-0 flex-1">
         <h3 className="truncate text-base font-black text-ink">{event.title}</h3>
@@ -213,7 +233,7 @@ function HeroEventRow({ event }: { event: CalendarEvent }) {
           Basketball
         </span>
       )}
-    </article>
+    </a>
   );
 }
 
@@ -539,7 +559,12 @@ function AssignmentRow({
   compact?: boolean;
 }) {
   return (
-    <article className={`rounded-lg border border-stone-200 bg-white ${compact ? 'p-3' : 'p-4'}`}>
+    <a
+      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-4'}`}
+      href={assignment.canvasUrl || LINKS.canvas}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h3 className="text-sm font-black text-ink">{assignment.title}</h3>
         <span
@@ -551,14 +576,19 @@ function AssignmentRow({
       <p className="mt-1 text-sm text-stone-600">
         {assignment.course} · {assignment.dueDate} · {assignment.estimatedMinutes} min
       </p>
-    </article>
+    </a>
   );
 }
 
 function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: boolean }) {
+  const isBasketball = event.source === 'Basketball' || event.source === 'Teamworks';
+  const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
   return (
-    <article
-      className={`grid gap-2 rounded-lg border border-stone-200 bg-white ${compact ? 'p-3' : 'p-4'} sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:items-center`}
+    <a
+      className={`grid gap-2 rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-4'} sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:items-center`}
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
     >
       <time className="text-sm font-black text-redbird-600">{formatTime(event.start)}</time>
       <div>
@@ -570,13 +600,24 @@ function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: 
       >
         {event.source}
       </span>
-    </article>
+    </a>
   );
+}
+
+function getEmailLink(email: EmailMessage): string {
+  if (['Basketball', 'Travel', 'Meetings'].includes(email.category)) return LINKS.teamworks;
+  if (['Assignments', 'Canvas', 'Illinois State'].includes(email.category)) return LINKS.outlook;
+  return LINKS.gmail;
 }
 
 function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailMessage }) {
   return (
-    <article className={`rounded-lg border border-stone-200 bg-white ${compact ? 'p-3' : 'p-4'}`}>
+    <a
+      className={`block rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-4'}`}
+      href={getEmailLink(email)}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold uppercase tracking-wide text-stone-500">
           {email.from}
@@ -591,7 +632,7 @@ function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailM
       {!compact ? (
         <p className="mt-1 text-sm leading-snug text-stone-600">{email.snippet}</p>
       ) : null}
-    </article>
+    </a>
   );
 }
 
