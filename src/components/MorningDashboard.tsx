@@ -54,7 +54,8 @@ export function TodaysGamePlan({
   today,
   todayWorkloadMinutes,
 }: GamePlanProps) {
-  const todayEvents = [...events.filter((event) => event.dayLabel === 'Today')].sort(byStartTime);
+  // Exclude Canvas events (assignment deadlines) from the schedule — they show in Get Done Today
+  const todayEvents = [...events.filter((event) => event.dayLabel === 'Today' && event.source !== 'Canvas')].sort(byStartTime);
   const actionEmails = getActionEmails(emails);
   const unreadCount = emails.filter((email) => email.unread).length;
   const dueTodayCount = assignments.filter(
@@ -369,20 +370,12 @@ export function TodaysTimeline({ events }: { events: CalendarEvent[] }) {
 export function ResponsibilitySections({
   assignments,
   events,
-  emails,
 }: {
   assignments: Assignment[];
   events: CalendarEvent[];
-  emails: EmailMessage[];
 }) {
-  const studentEmails = emails.filter((email) =>
-    ['Assignments', 'Canvas', 'Illinois State'].includes(email.category),
-  );
   const coachEvents = events.filter(
     (event) => event.source === 'Basketball' || event.source === 'Teamworks',
-  );
-  const coachEmails = emails.filter((email) =>
-    ['Basketball', 'Travel', 'Meetings'].includes(email.category),
   );
 
   return (
@@ -399,18 +392,12 @@ export function ResponsibilitySections({
             .map((assignment) => (
               <AssignmentRow assignment={assignment} key={assignment.id} />
             ))}
-          {studentEmails.slice(0, 2).map((email) => (
-            <EmailRow email={email} key={email.id} />
-          ))}
         </div>
       </DashboardCard>
       <DashboardCard eyebrow="Coach" title="Basketball responsibilities">
         <div className="grid gap-3">
           {coachEvents.slice(0, 5).map((event) => (
             <EventRow event={event} key={event.id} />
-          ))}
-          {coachEmails.slice(0, 2).map((email) => (
-            <EmailRow email={email} key={email.id} />
           ))}
         </div>
       </DashboardCard>
@@ -505,7 +492,8 @@ export function UpcomingThisWeek({
   events: CalendarEvent[];
   weekWorkloadMinutes: number;
 }) {
-  const tomorrowEvents = events.filter((event) => event.dayLabel === 'Tomorrow');
+  // Exclude Canvas calendar events — assignments already show the deadlines
+  const tomorrowEvents = events.filter((event) => event.dayLabel === 'Tomorrow' && event.source !== 'Canvas');
   const tomorrowAssignments = assignments.filter(
     (assignment) => assignment.status !== 'Done' && isDueTomorrow(assignment),
   );
@@ -548,7 +536,8 @@ export function UpcomingAfterTomorrow({
   assignments: Assignment[];
   events: CalendarEvent[];
 }) {
-  const futureEvents = events.filter((event) => event.dayLabel === 'Next 7 days');
+  // Exclude Canvas events — assignments already represent those deadlines
+  const futureEvents = events.filter((event) => event.dayLabel === 'Next 7 days' && event.source !== 'Canvas');
   const futureAssignments = assignments.filter(
     (assignment) =>
       assignment.status !== 'Done' && !isDueToday(assignment) && !isDueTomorrow(assignment),
@@ -560,21 +549,40 @@ export function UpcomingAfterTomorrow({
     ...futureAssignments.map((a) => ({ id: `assignment-${a.id}`, time: a.dueAt ? new Date(a.dueAt).getTime() : Infinity, type: 'assignment' as const, data: a })),
   ].sort((a, b) => a.time - b.time);
 
+  // Group by calendar day
+  const grouped = new Map<string, { dayDate: Date; items: typeof futureItems }>();
+  for (const item of futureItems) {
+    const date = new Date(item.time === Infinity ? Date.now() : item.time);
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    if (!grouped.has(key)) grouped.set(key, { dayDate: date, items: [] });
+    grouped.get(key)!.items.push(item);
+  }
+  const groupedDays = [...grouped.values()].sort((a, b) => a.dayDate.getTime() - b.dayDate.getTime());
+
   return (
     <DashboardCard eyebrow="Rest of week" title="Coming Up">
-      <div className="grid gap-2 sm:gap-3">
-        {futureItems.length ? (
-          futureItems.map((item) =>
-            item.type === 'event' ? (
-              <EventRow event={item.data as CalendarEvent} key={item.id} />
-            ) : (
-              <AssignmentRow assignment={item.data as Assignment} key={item.id} />
-            ),
-          )
-        ) : (
-          <EmptyState message="Nothing else coming up this week." />
-        )}
-      </div>
+      {groupedDays.length ? (
+        <div className="grid gap-5">
+          {groupedDays.map(({ dayDate, items }) => (
+            <div key={dayDate.toDateString()}>
+              <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-redbird-600">
+                {new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).format(dayDate)}
+              </p>
+              <div className="grid gap-2 sm:gap-3">
+                {items.map((item) =>
+                  item.type === 'event' ? (
+                    <EventRow event={item.data as CalendarEvent} key={item.id} />
+                  ) : (
+                    <AssignmentRow assignment={item.data as Assignment} key={item.id} />
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState message="Nothing else coming up this week." />
+      )}
     </DashboardCard>
   );
 }
@@ -684,9 +692,15 @@ function AssignmentRow({
   );
 }
 
+function isAllDayEvent(start: string): boolean {
+  const d = new Date(start);
+  return d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+}
+
 function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: boolean }) {
   const isBasketball = event.source === 'Basketball' || event.source === 'Teamworks';
   const href = isBasketball ? LINKS.teamworks : event.source === 'Canvas' ? LINKS.canvas : LINKS.googleCalendar;
+  const timeLabel = isAllDayEvent(event.start) ? 'All day' : formatTime(event.start);
   return (
     <a
       className={`grid gap-2 rounded-lg border border-stone-200 bg-white transition-colors hover:bg-stone-50 ${compact ? 'p-3' : 'p-3 sm:p-4'} sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:items-center`}
@@ -694,7 +708,7 @@ function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: 
       rel="noopener noreferrer"
       target="_blank"
     >
-      <time className="text-sm font-black text-redbird-600">{formatTime(event.start)}</time>
+      <time className="text-sm font-black text-redbird-600">{timeLabel}</time>
       <div>
         <h3 className="text-sm font-black text-ink">{cleanEventTitle(event.title)}</h3>
         <p className="mt-0.5 text-sm text-stone-600">{event.location ?? 'No location listed'}</p>

@@ -8,7 +8,6 @@ import {
   LINKS,
   ResponsibilitySections,
   TodaysGamePlan,
-  TomorrowPrep,
   UpcomingAfterTomorrow,
   UpcomingThisWeek,
   type RankedPriority,
@@ -153,18 +152,15 @@ export function DashboardClient({ today: _today }: { today: string }) {
 
       <div className="mx-auto grid max-w-[1500px] gap-3 sm:gap-5">
         <div className="grid gap-3 sm:gap-5 lg:grid-cols-2">
-          <ResponsibilitySections assignments={assignments} emails={emails} events={events} />
-        </div>
-
-        <div className="grid gap-3 sm:gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <TomorrowPrep assignments={assignments} events={events} />
-          <InboxRequiringAction emails={emails} />
+          <ResponsibilitySections assignments={assignments} events={events} />
         </div>
 
         <div className="grid gap-3 sm:gap-5 lg:grid-cols-2">
           <UpcomingThisWeek assignments={assignments} events={events} weekWorkloadMinutes={weekWorkloadMinutes} />
-          <UpcomingAfterTomorrow assignments={assignments} events={events} />
+          <InboxRequiringAction emails={emails} />
         </div>
+
+        <UpcomingAfterTomorrow assignments={assignments} events={events} />
       </div>
     </main>
     </DoneItemsProvider>
