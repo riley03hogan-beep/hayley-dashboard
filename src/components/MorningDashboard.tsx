@@ -560,9 +560,6 @@ function suggestFolder(email: EmailMessage): string | null {
   )
     return 'Class';
   if (text.includes('erefund') || text.includes('refund')) return 'Finances';
-  if (text.includes('receipt') || text.includes('order') || text.includes('purchase'))
-    return 'Receipts & Orders';
-  if (text.includes('travel') || text.includes('flight') || text.includes('hotel')) return 'Travel';
   if (
     text.includes('apartment') ||
     text.includes('lease') ||
@@ -579,6 +576,9 @@ function suggestFolder(email: EmailMessage): string | null {
     text.includes('renters insurance')
   )
     return 'Illinois State/Apartment';
+  if (text.includes('receipt') || text.includes('order') || text.includes('purchase'))
+    return 'Receipts & Orders';
+  if (text.includes('travel') || text.includes('flight') || text.includes('hotel')) return 'Travel';
   if (
     text.includes('illinois state') ||
     text.includes('illinoisstate.edu') ||
