@@ -149,7 +149,7 @@ export function setGoogleTokenCookie(response: NextResponse, tokens: GoogleToken
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: 60 * 60 * 24 * 365,
   });
 }
 
@@ -212,7 +212,7 @@ async function fetchCalendarEvents(accessToken: string): Promise<CalendarEvent[]
       url.searchParams.set('orderBy', 'startTime');
       url.searchParams.set('timeMin', timeMin);
       url.searchParams.set('timeMax', timeMax);
-      url.searchParams.set('maxResults', '12');
+      url.searchParams.set('maxResults', '25');
       const events = await googleFetch<GoogleCalendarEventsResponse>(url.toString(), accessToken);
       return (events.items ?? []).map((event) => mapCalendarEvent(event, calendar.summary ?? 'Google Calendar'));
     }),
@@ -221,7 +221,7 @@ async function fetchCalendarEvents(accessToken: string): Promise<CalendarEvent[]
   return eventGroups
     .flat()
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
-    .slice(0, 20);
+    .slice(0, 60);
 }
 
 async function fetchGmailMessages(accessToken: string): Promise<EmailMessage[]> {
@@ -230,7 +230,7 @@ async function fetchGmailMessages(accessToken: string): Promise<EmailMessage[]> 
     'q',
     'in:inbox newer_than:14d (canvas OR teamworks OR basketball OR coach OR "Illinois State" OR outlook OR urgent OR "action needed" OR due OR travel OR meeting)',
   );
-  url.searchParams.set('maxResults', '12');
+  url.searchParams.set('maxResults', '30');
 
   const list = await googleFetch<GmailListResponse>(url.toString(), accessToken);
   const messages = await Promise.all(
