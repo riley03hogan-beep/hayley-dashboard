@@ -564,6 +564,22 @@ function suggestFolder(email: EmailMessage): string | null {
     return 'Receipts & Orders';
   if (text.includes('travel') || text.includes('flight') || text.includes('hotel')) return 'Travel';
   if (
+    text.includes('apartment') ||
+    text.includes('lease') ||
+    text.includes('rent') ||
+    text.includes('tenant') ||
+    text.includes('landlord') ||
+    text.includes('maintenance request') ||
+    text.includes('move-in') ||
+    text.includes('move in') ||
+    text.includes('application fee') ||
+    text.includes('apt ') ||
+    text.includes('bloomington') ||
+    text.includes('property management') ||
+    text.includes('renters insurance')
+  )
+    return 'Illinois State/Apartment';
+  if (
     text.includes('illinois state') ||
     text.includes('illinoisstate.edu') ||
     text.includes('registrar') ||
