@@ -261,7 +261,7 @@ function estimateAssignmentMinutes(title: string) {
 
 function getAssignmentStatus(value: string): Assignment['status'] {
   const now = Date.now();
-  const due = new Date(value).getTime();
+  const due = parseLocalDate(value).getTime();
   if (due < now) return 'Overdue';
   if (due - now <= 1000 * 60 * 60 * 48) return 'Due Soon';
   return 'Upcoming';
@@ -274,8 +274,8 @@ function sortAssignments(a: Assignment, b: Assignment) {
     Upcoming: 2,
     Done: 3,
   };
-  const dueA = a.dueAt ? new Date(a.dueAt).getTime() : Number.MAX_SAFE_INTEGER;
-  const dueB = b.dueAt ? new Date(b.dueAt).getTime() : Number.MAX_SAFE_INTEGER;
+  const dueA = a.dueAt ? parseLocalDate(a.dueAt).getTime() : Number.MAX_SAFE_INTEGER;
+  const dueB = b.dueAt ? parseLocalDate(b.dueAt).getTime() : Number.MAX_SAFE_INTEGER;
   return statusOrder[a.status] - statusOrder[b.status] || dueA - dueB;
 }
 
@@ -302,22 +302,33 @@ function byStartTime(a: CalendarEvent, b: CalendarEvent) {
   return new Date(a.start).getTime() - new Date(b.start).getTime();
 }
 
+// Google Calendar returns all-day Canvas deadline events as date-only strings like "2026-06-11".
+// JS parses these as UTC midnight, which in CDT is June 10 at 7 PM -- one day too early.
+// Parse as local 11:59 PM so dates are correct and deadlines sort after timed events.
+function parseLocalDate(value: string): Date {
+  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) {
+    const parts = value.split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 0);
+  }
+  return new Date(value);
+}
+
+function isAllDayString(value: string): boolean {
+  return /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value);
+}
+
 function formatDueDate(value: string) {
-  const date = new Date(value);
+  const date = parseLocalDate(value);
+  const allDay = isAllDayString(value);
   const now = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(now.getDate() + 1);
-
-  if (sameDate(date, now)) return `Today, ${formatTime(value)}`;
-  if (sameDate(date, tomorrow)) return `Tomorrow, ${formatTime(value)}`;
-
-  return new Intl.DateTimeFormat('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
+  if (sameDate(date, now)) return allDay ? 'Today, 11:59 PM' : 'Today, ' + formatTime(value);
+  if (sameDate(date, tomorrow)) return allDay ? 'Tomorrow, 11:59 PM' : 'Tomorrow, ' + formatTime(value);
+  if (allDay) {
+    return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
+  }
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
 }
 
 function sameDate(a: Date, b: Date) {

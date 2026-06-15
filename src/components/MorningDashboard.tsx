@@ -384,8 +384,8 @@ export function ResponsibilitySections({
         <div className="grid gap-3">
           {[...assignments]
             .sort((a, b) => {
-              const aTime = a.dueAt ? new Date(a.dueAt).getTime() : Infinity;
-              const bTime = b.dueAt ? new Date(b.dueAt).getTime() : Infinity;
+              const aTime = a.dueAt ? parseLocalDate(a.dueAt).getTime() : Infinity;
+              const bTime = b.dueAt ? parseLocalDate(b.dueAt).getTime() : Infinity;
               return aTime - bTime;
             })
             .slice(0, 5)
@@ -694,18 +694,15 @@ function AssignmentRow({
 }
 
 function isAllDayEvent(start: string): boolean {
-  const d = new Date(start);
-  return d.getHours() === 0 && d.getMinutes() === 0 && d.getSeconds() === 0;
+  // Date-only strings from Google Calendar are all-day events
+  return /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(start);
 }
 
 // Canvas deadlines often have midnight timestamps — sort them at 11:59 PM so they appear after timed events
+// Canvas deadlines come as date-only strings -- parseLocalDate sets them to 11:59 PM
 function sortableAssignmentTime(a: Assignment): number {
   if (!a.dueAt) return Infinity;
-  const d = new Date(a.dueAt);
-  if (d.getHours() === 0 && d.getMinutes() === 0) {
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59).getTime();
-  }
-  return d.getTime();
+  return parseLocalDate(a.dueAt).getTime();
 }
 
 function EventRow({ event, compact = false }: { event: CalendarEvent; compact?: boolean }) {
@@ -798,10 +795,21 @@ function getActionEmails(emails: EmailMessage[]) {
     .slice(0, 6);
 }
 
+// Canvas all-day events come as date-only strings (e.g. "2026-06-11").
+// JS parses these as UTC midnight, shifting the date to the previous day in CDT.
+// Parse as local 11:59 PM so date comparisons are always correct.
+function parseLocalDate(value: string): Date {
+  if (/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value)) {
+    const parts = value.split('-').map(Number);
+    return new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 0);
+  }
+  return new Date(value);
+}
+
 export function isDueToday(assignment: Assignment) {
   if (assignment.dueDate.toLowerCase().includes('today')) return true;
   if (!assignment.dueAt) return false;
-  return sameDate(new Date(assignment.dueAt), new Date());
+  return sameDate(parseLocalDate(assignment.dueAt), new Date());
 }
 
 export function isDueTomorrow(assignment: Assignment) {
@@ -809,7 +817,7 @@ export function isDueTomorrow(assignment: Assignment) {
   if (!assignment.dueAt) return false;
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  return sameDate(new Date(assignment.dueAt), tomorrow);
+  return sameDate(parseLocalDate(assignment.dueAt), tomorrow);
 }
 
 function sameDate(a: Date, b: Date) {
