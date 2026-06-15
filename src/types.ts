@@ -1,4 +1,4 @@
-export type EventSource = 'Teamworks' | 'Canvas' | 'Basketball' | 'Personal';
+export type EventSource = 'Basketball' | 'School' | 'Holiday' | 'Personal';
 export type TaskStatus = 'Due Soon' | 'Upcoming' | 'Overdue' | 'Done';
 export type TodoCategory = 'School' | 'Basketball' | 'Personal' | 'Admin' | 'Urgent';
 export type NoteCategory = 'Class notes' | 'Basketball notes' | 'To ask coach' | 'To do later';

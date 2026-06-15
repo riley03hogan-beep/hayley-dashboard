@@ -6,11 +6,9 @@ import {
   isDueToday,
   isDueTomorrow,
   LINKS,
-  ResponsibilitySections,
+  ThisWeekView,
   TodaysGamePlan,
-  UpcomingAfterTomorrow,
-  UpcomingThisWeek,
-  type RankedPriority,
+  TodayView,
 } from '@/components/MorningDashboard';
 import { DoneItemsProvider } from '@/context/DoneItemsContext';
 import { mockAssignments, mockEmails, mockEvents, setupStatusItems } from '@/data/mockData';
@@ -90,7 +88,7 @@ export function DashboardClient({ today: _today }: { today: string }) {
   const assignments = useMemo(() => {
     if (dashboard.source === 'live') {
       const liveAssignments = dashboard.events
-        .filter((event) => event.source === 'Canvas')
+        .filter((event) => event.source === 'School')
         .map(eventToAssignment)
         .sort(sortAssignments);
 
@@ -102,11 +100,6 @@ export function DashboardClient({ today: _today }: { today: string }) {
 
   const events = useMemo(() => [...dashboard.events].sort(byStartTime), [dashboard.events]);
   const emails = dashboard.emails;
-
-  const priorities = useMemo(
-    () => buildTopPriorities({ assignments, emails, events }),
-    [assignments, emails, events],
-  );
 
   const todayWorkloadMinutes = useMemo(
     () =>
@@ -124,108 +117,44 @@ export function DashboardClient({ today: _today }: { today: string }) {
     [assignments],
   );
 
+  const dueTodayCount = useMemo(
+    () => assignments.filter((a) => a.status !== 'Done' && (isDueToday(a) || a.status === 'Overdue')).length,
+    [assignments],
+  );
+
+  const unreadCount = useMemo(() => emails.filter((e) => e.unread).length, [emails]);
+
   return (
     <DoneItemsProvider>
-    <main className="min-h-screen bg-[#f7f3ee] bg-[linear-gradient(135deg,rgba(206,17,38,0.08),transparent_34%),linear-gradient(180deg,#fffdf9_0%,#f7f3ee_100%)] px-3 py-3 text-ink sm:px-4 sm:py-5 lg:px-8">
-      <TodaysGamePlan
-        assignments={assignments}
-        connected={dashboard.connected}
-        configured={dashboard.configured}
-        emails={emails}
-        events={events}
-        hasLoaded={hasLoaded}
-        isLive={dashboard.source === 'live'}
-        isRefreshing={isRefreshing}
-        lastUpdated={lastUpdated}
-        onRefresh={() => loadDashboard()}
-        priorities={priorities}
-        today={today}
-        todayWorkloadMinutes={todayWorkloadMinutes}
-        weekWorkloadMinutes={weekWorkloadMinutes}
-      />
+      <main className="min-h-screen bg-[#f7f3ee] bg-[linear-gradient(135deg,rgba(206,17,38,0.08),transparent_34%),linear-gradient(180deg,#fffdf9_0%,#f7f3ee_100%)] px-3 py-3 text-ink sm:px-4 sm:py-5 lg:px-8">
+        <TodaysGamePlan
+          connected={dashboard.connected}
+          configured={dashboard.configured}
+          dueTodayCount={dueTodayCount}
+          hasLoaded={hasLoaded}
+          isLive={dashboard.source === 'live'}
+          isRefreshing={isRefreshing}
+          lastUpdated={lastUpdated}
+          onRefresh={() => loadDashboard()}
+          today={today}
+          todayWorkloadMinutes={todayWorkloadMinutes}
+          unreadCount={unreadCount}
+        />
 
-      {dashboard.error ? (
-        <p className="mx-auto mb-5 max-w-[1500px] rounded-lg border border-stone-200 bg-white/90 p-4 text-sm font-semibold text-stone-600 shadow-soft">
-          Some live data could not load, so this view is using fallback data for now.
-        </p>
-      ) : null}
+        {dashboard.error ? (
+          <p className="mx-auto mb-5 max-w-[1500px] rounded-lg border border-stone-200 bg-white/90 p-4 text-sm font-semibold text-stone-600 shadow-soft">
+            Some live data could not load, so this view is using fallback data for now.
+          </p>
+        ) : null}
 
-      <div className="mx-auto grid max-w-[1500px] gap-3 sm:gap-5">
-        <div className="grid gap-3 sm:gap-5 lg:grid-cols-2">
-          <ResponsibilitySections assignments={assignments} events={events} />
-        </div>
-
-        <div className="grid gap-3 sm:gap-5 lg:grid-cols-2">
-          <UpcomingThisWeek assignments={assignments} events={events} weekWorkloadMinutes={weekWorkloadMinutes} />
+        <div className="mx-auto grid max-w-[1500px] gap-3 sm:gap-5">
+          <TodayView assignments={assignments} events={events} today={today} />
           <InboxRequiringAction emails={emails} />
+          <ThisWeekView assignments={assignments} events={events} weekWorkloadMinutes={weekWorkloadMinutes} />
         </div>
-
-        <UpcomingAfterTomorrow assignments={assignments} events={events} />
-      </div>
-    </main>
+      </main>
     </DoneItemsProvider>
   );
-}
-
-function buildTopPriorities({
-  assignments,
-  emails,
-  events,
-}: {
-  assignments: Assignment[];
-  emails: EmailMessage[];
-  events: CalendarEvent[];
-}): RankedPriority[] {
-  const assignmentPriorities: RankedPriority[] = assignments
-    .filter((assignment) => assignment.status !== 'Done')
-    .map((assignment) => {
-      const score = getAssignmentScore(assignment);
-      return {
-        id: `assignment-${assignment.id}`,
-        title: assignment.title,
-        detail: `${assignment.course} · ${assignment.dueDate} · ${assignment.estimatedMinutes} min`,
-        score,
-        source: 'Student' as const,
-        href: assignment.canvasUrl || LINKS.canvas,
-        doneKey: assignment.id,
-      };
-    })
-    .filter((item) => item.score > 0);
-
-  const basketballPriorities: RankedPriority[] = events
-    .filter((event) => event.dayLabel === 'Today' && (event.source === 'Basketball' || event.source === 'Teamworks'))
-    .map((event) => ({
-      id: `event-${event.id}`,
-      title: event.title,
-      detail: `${formatTime(event.start)}${event.location ? ` · ${event.location}` : ''}`,
-      score: 50,
-      source: 'Coach' as const,
-      href: LINKS.teamworks,
-      doneKey: event.id,
-    }));
-
-  const emailPriorities: RankedPriority[] = emails
-    .filter((email) => email.unread || email.important)
-    .map((email) => ({
-      id: `email-${email.id}`,
-      title: shortText(email.subject, 74),
-      detail: `${email.from} · ${shortText(email.snippet, 110)}`,
-      score: isProfessorEmail(email) && email.unread ? 40 : 10,
-      source: 'Inbox' as const,
-      href: isForwardedSchoolEmail(email) ? LINKS.outlook : LINKS.gmail,
-      doneKey: `email-${email.id}`,
-    }));
-
-  return [...assignmentPriorities, ...basketballPriorities, ...emailPriorities]
-    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
-    .slice(0, 3);
-}
-
-function getAssignmentScore(assignment: Assignment) {
-  if (assignment.status === 'Overdue') return 100;
-  if (isDueToday(assignment)) return 90;
-  if (isDueTomorrow(assignment)) return 70;
-  return 0;
 }
 
 function eventToAssignment(event: CalendarEvent): Assignment {
@@ -283,21 +212,6 @@ function getActionEmails(emails: EmailMessage[]) {
   return emails.filter((email) => email.unread || email.important || email.category === 'Urgent');
 }
 
-function isProfessorEmail(email: EmailMessage) {
-  const value = `${email.from} ${email.subject}`.toLowerCase();
-  return ['professor', 'instructor', 'faculty', 'spm ', 'canvas'].some((keyword) => value.includes(keyword));
-}
-
-function isForwardedSchoolEmail(email: EmailMessage) {
-  return (
-    ['Assignments', 'Canvas', 'Illinois State'].includes(email.category) ||
-    email.from.toLowerCase().includes('instructor') ||
-    email.from.toLowerCase().includes('professor') ||
-    email.from.toLowerCase().includes('illinois state') ||
-    email.from.toLowerCase().includes('canvas')
-  );
-}
-
 function byStartTime(a: CalendarEvent, b: CalendarEvent) {
   return new Date(a.start).getTime() - new Date(b.start).getTime();
 }
@@ -347,9 +261,4 @@ function formatRefreshTime(value: Date) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(value);
-}
-
-function shortText(value: string, maxLength: number) {
-  const cleaned = value.replace(/\s+/g, ' ').trim();
-  return cleaned.length > maxLength ? `${cleaned.slice(0, maxLength - 1)}...` : cleaned;
 }

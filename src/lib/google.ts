@@ -299,8 +299,11 @@ function mapGmailMessage(message: GmailMessageResponse): EmailMessage {
 
 function getEventSource(value: string, calendarName: string): EventSource {
   const calendar = calendarName.toLowerCase();
-  if (calendar.includes('canvas') || value.includes('canvas')) return 'Canvas';
-  return 'Basketball';
+  const s = (value + ' ' + calendarName).toLowerCase();
+  if (calendar.includes('canvas') || s.includes('[knr') || s.includes('[spm')) return 'School';
+  if (calendar.includes('basketball') || calendar.includes('teamworks') || s.includes('basketball') || s.includes('teamworks')) return 'Basketball';
+  if (calendar.includes('holiday') || calendar.includes('holidays') || calendar.includes('united states')) return 'Holiday';
+  return 'Personal';
 }
 
 function getEmailCategory(value: string): EmailCategory {
