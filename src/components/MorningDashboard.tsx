@@ -512,11 +512,11 @@ function EmailRow({ compact = false, email }: { compact?: boolean; email: EmailM
         </a>
         <button
           aria-label="Mark as filed"
-          className="ml-2 mt-0.5 shrink-0 rounded-full border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-black text-stone-500 transition hover:border-stone-400 hover:text-stone-700"
+          className="ml-2 mt-0.5 shrink-0 rounded-full border border-stone-200 bg-white px-2.5 py-1 text-sm text-stone-400 transition hover:border-stone-400 hover:text-stone-700"
           onClick={() => toggleDone(doneKey)}
           type="button"
         >
-          Filed ✓
+          ✓
         </button>
       </div>
     </div>
