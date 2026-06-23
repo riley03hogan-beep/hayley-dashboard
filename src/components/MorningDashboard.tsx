@@ -491,6 +491,7 @@ export function CalendarView({
           {weekDays.map((day) => {
             const isToday = isSameDay(day, today);
             const key = dayKey(day);
+            const now = new Date();
             const dayEvts = (eventsByDay.get(key) ?? [])
               .sort((a, b) => parseLocalDate(a.start).getTime() - parseLocalDate(b.start).getTime());
             const dayAssignments = assignmentsByDay.get(key) ?? [];
@@ -503,21 +504,24 @@ export function CalendarView({
                   {day.getDate()}
                 </p>
                 <div className="grid gap-0.5">
-                  {dayEvts.map((e) => (
-                    <a
-                      href={e.source === 'Basketball' ? LINKS.teamworks : LINKS.googleCalendar}
-                      key={e.id}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                      className={`truncate rounded px-1 py-0.5 text-[11px] font-bold leading-tight hover:opacity-80 ${sourcePill[e.source] ?? 'bg-stone-400 text-white'}`}
-                      title={cleanEventTitle(e.title)}
-                    >
-                      {!isAllDayEvent(e.start) && (
-                        <span className="mr-0.5 opacity-75">{formatTime(e.start)}</span>
-                      )}
-                      {cleanEventTitle(e.title)}
-                    </a>
-                  ))}
+                  {dayEvts.map((e) => {
+                    const isPast = isToday && !isAllDayEvent(e.start) && new Date(e.end ?? e.start) < now;
+                    return (
+                      <a
+                        href={e.source === 'Basketball' ? LINKS.teamworks : LINKS.googleCalendar}
+                        key={e.id}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                        className={`truncate rounded px-1 py-0.5 text-[11px] font-bold leading-tight hover:opacity-80 ${sourcePill[e.source] ?? 'bg-stone-400 text-white'} ${isPast ? 'opacity-40 line-through' : ''}`}
+                        title={cleanEventTitle(e.title)}
+                      >
+                        {!isAllDayEvent(e.start) && (
+                          <span className="mr-0.5 opacity-75">{formatTime(e.start)}</span>
+                        )}
+                        {cleanEventTitle(e.title)}
+                      </a>
+                    );
+                  })}
                   {dayAssignments.map((a) => (
                     <a
                       href={a.canvasUrl || LINKS.canvas}
