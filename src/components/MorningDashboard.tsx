@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import type { Assignment, CalendarEvent, EmailMessage } from '@/types';
 import { useDoneItems } from '@/context/DoneItemsContext';
 
@@ -317,6 +317,232 @@ export function ThisWeekView({
       ) : (
         <EmptyState message="Nothing else coming up this week." />
       )}
+    </DashboardCard>
+  );
+}
+
+// ── CalendarView ─────────────────────────────────────────────────────────────
+
+export function CalendarView({ events }: { events: CalendarEvent[] }) {
+  const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
+  const [refDate, setRefDate] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+
+  // Map events to their calendar date (as toDateString key)
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of events) {
+      const d = parseLocalDate(e.start);
+      d.setHours(0, 0, 0, 0);
+      const key = d.toDateString();
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(e);
+    }
+    return map;
+  }, [events]);
+
+  function isSameDay(a: Date, b: Date) {
+    return a.toDateString() === b.toDateString();
+  }
+
+  function getWeekDays(ref: Date): Date[] {
+    const d = new Date(ref);
+    const dow = d.getDay();
+    const offset = dow === 0 ? -6 : 1 - dow; // shift to Monday
+    d.setDate(d.getDate() + offset);
+    return Array.from({ length: 7 }, (_, i) => {
+      const day = new Date(d);
+      day.setDate(d.getDate() + i);
+      return day;
+    });
+  }
+
+  function getMonthGrid(ref: Date) {
+    const year = ref.getFullYear();
+    const month = ref.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const startOffset = (firstDay.getDay() + 6) % 7; // Mon = 0
+    const grid: (Date | null)[] = [
+      ...Array<null>(startOffset).fill(null),
+      ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
+    ];
+    while (grid.length % 7 !== 0) grid.push(null);
+    return grid;
+  }
+
+  const sourcePill: Record<string, string> = {
+    Basketball: 'bg-emerald-500 text-white',
+    School: 'bg-blue-500 text-white',
+    Holiday: 'bg-amber-400 text-white',
+    Personal: 'bg-purple-500 text-white',
+  };
+
+  const sourceDot: Record<string, string> = {
+    Basketball: 'bg-emerald-500',
+    School: 'bg-blue-500',
+    Holiday: 'bg-amber-400',
+    Personal: 'bg-purple-500',
+  };
+
+  const DAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  const navControls = (
+    <div className="mb-4 flex items-center gap-2">
+      <button
+        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-600 transition hover:bg-stone-50"
+        onClick={() => {
+          const d = new Date(refDate);
+          if (viewMode === 'week') d.setDate(d.getDate() - 7);
+          else d.setMonth(d.getMonth() - 1);
+          setRefDate(d);
+        }}
+        type="button"
+      >
+        ‹
+      </button>
+      <button
+        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-600 transition hover:bg-stone-50"
+        onClick={() => { const d = new Date(); d.setHours(0,0,0,0); setRefDate(d); }}
+        type="button"
+      >
+        Today
+      </button>
+      <button
+        className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-600 transition hover:bg-stone-50"
+        onClick={() => {
+          const d = new Date(refDate);
+          if (viewMode === 'week') d.setDate(d.getDate() + 7);
+          else d.setMonth(d.getMonth() + 1);
+          setRefDate(d);
+        }}
+        type="button"
+      >
+        ›
+      </button>
+      <div className="ml-auto flex overflow-hidden rounded-lg border border-stone-200">
+        <button
+          className={`px-3 py-1.5 text-sm font-bold transition ${viewMode === 'week' ? 'bg-redbird-500 text-white' : 'bg-white text-stone-600 hover:bg-stone-50'}`}
+          onClick={() => setViewMode('week')}
+          type="button"
+        >
+          Week
+        </button>
+        <button
+          className={`px-3 py-1.5 text-sm font-bold transition ${viewMode === 'month' ? 'bg-redbird-500 text-white' : 'bg-white text-stone-600 hover:bg-stone-50'}`}
+          onClick={() => setViewMode('month')}
+          type="button"
+        >
+          Month
+        </button>
+      </div>
+    </div>
+  );
+
+  if (viewMode === 'week') {
+    const weekDays = getWeekDays(refDate);
+    const title = `${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(weekDays[0])} – ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(weekDays[6])}`;
+
+    return (
+      <DashboardCard eyebrow="Calendar" title={title}>
+        {navControls}
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          {DAY_HEADERS.map((d) => (
+            <div key={d} className="pb-1 text-center text-[10px] font-extrabold uppercase tracking-wide text-stone-500">
+              {d}
+            </div>
+          ))}
+          {weekDays.map((day) => {
+            const isToday = isSameDay(day, today);
+            const dayEvts = (eventsByDay.get(day.toDateString()) ?? [])
+              .filter((e) => e.source !== 'School')
+              .sort((a, b) => parseLocalDate(a.start).getTime() - parseLocalDate(b.start).getTime());
+            return (
+              <div
+                key={day.toDateString()}
+                className={`min-h-[100px] rounded-lg border p-1 sm:p-1.5 ${isToday ? 'border-redbird-500 bg-red-50' : 'border-stone-200 bg-white'}`}
+              >
+                <p className={`mb-1 text-center text-xs font-black ${isToday ? 'text-redbird-600' : 'text-stone-500'}`}>
+                  {day.getDate()}
+                </p>
+                <div className="grid gap-0.5">
+                  {dayEvts.map((e) => (
+                    <div
+                      key={e.id}
+                      className={`truncate rounded px-1 py-0.5 text-[9px] font-bold leading-tight ${sourcePill[e.source] ?? 'bg-stone-400 text-white'}`}
+                      title={cleanEventTitle(e.title)}
+                    >
+                      {!isAllDayEvent(e.start) && (
+                        <span className="mr-0.5 opacity-80">{formatTime(e.start)}</span>
+                      )}
+                      {cleanEventTitle(e.title)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </DashboardCard>
+    );
+  }
+
+  // Monthly view
+  const monthGrid = getMonthGrid(refDate);
+  const monthLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(refDate);
+
+  return (
+    <DashboardCard eyebrow="Calendar" title={monthLabel}>
+      {navControls}
+      <div className="grid grid-cols-7 gap-1">
+        {DAY_HEADERS.map((d) => (
+          <div key={d} className="pb-1 text-center text-[10px] font-extrabold uppercase tracking-wide text-stone-500">
+            {d}
+          </div>
+        ))}
+        {monthGrid.map((day, i) =>
+          day ? (
+            <div
+              key={i}
+              className={`min-h-[56px] rounded-lg border p-1 ${isSameDay(day, today) ? 'border-redbird-500 bg-red-50' : 'border-stone-200 bg-white'}`}
+            >
+              <p className={`mb-1 text-center text-xs font-black ${isSameDay(day, today) ? 'text-redbird-600' : 'text-stone-600'}`}>
+                {day.getDate()}
+              </p>
+              <div className="flex flex-wrap justify-center gap-0.5">
+                {(eventsByDay.get(day.toDateString()) ?? [])
+                  .filter((e) => e.source !== 'School')
+                  .map((e) => (
+                    <span
+                      key={e.id}
+                      className={`size-2 rounded-full ${sourceDot[e.source] ?? 'bg-stone-400'}`}
+                      title={cleanEventTitle(e.title)}
+                    />
+                  ))}
+              </div>
+            </div>
+          ) : (
+            <div key={i} />
+          ),
+        )}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {Object.entries(sourceDot).map(([source, color]) => (
+          <div key={source} className="flex items-center gap-1.5">
+            <span className={`size-2.5 rounded-full ${color}`} />
+            <span className="text-xs font-semibold text-stone-600">{source}</span>
+          </div>
+        ))}
+      </div>
     </DashboardCard>
   );
 }

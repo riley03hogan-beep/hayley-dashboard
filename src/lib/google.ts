@@ -203,7 +203,7 @@ async function fetchCalendarEvents(accessToken: string): Promise<CalendarEvent[]
   );
   const calendars = (calendarList.items ?? []).filter((calendar) => calendar.selected || calendar.primary).slice(0, 10);
   const timeMin = startOfToday().toISOString();
-  const timeMax = addDays(startOfToday(), 8).toISOString();
+  const timeMax = addDays(startOfToday(), 35).toISOString();
 
   const eventGroups = await Promise.all(
     calendars.map(async (calendar) => {
