@@ -899,12 +899,22 @@ function suggestFolder(email: EmailMessage): string | null {
 }
 
 function getEmailLink(email: EmailMessage): string {
+  // Basketball emails (Teamworks notifications, coach emails, etc.) → Teamworks
+  if (
+    email.category === 'Basketball' ||
+    email.from.toLowerCase().includes('teamworks') ||
+    email.from.toLowerCase().includes('coach') ||
+    email.from.toLowerCase().includes('wbb')
+  )
+    return LINKS.teamworks;
+  // School emails → Outlook (ISU's mail client)
   const isSchool =
-    ['Assignments', 'Canvas', 'Illinois State'].includes(email.category) ||
+    ['Assignments', 'Illinois State'].includes(email.category) ||
     email.from.toLowerCase().includes('instructor') ||
     email.from.toLowerCase().includes('professor') ||
     email.from.toLowerCase().includes('illinois state') ||
-    email.from.toLowerCase().includes('canvas');
+    email.from.toLowerCase().includes('canvas') ||
+    email.from.toLowerCase().includes('illinoisstate.edu');
   return isSchool ? LINKS.outlook : LINKS.gmail;
 }
 
