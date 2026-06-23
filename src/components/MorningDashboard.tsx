@@ -323,7 +323,13 @@ export function ThisWeekView({
 
 // ── CalendarView ─────────────────────────────────────────────────────────────
 
-export function CalendarView({ events }: { events: CalendarEvent[] }) {
+export function CalendarView({
+  assignments,
+  events,
+}: {
+  assignments: Assignment[];
+  events: CalendarEvent[];
+}) {
   const [viewMode, setViewMode] = useState<'week' | 'month'>('week');
   const [refDate, setRefDate] = useState(() => {
     const d = new Date();
@@ -337,22 +343,40 @@ export function CalendarView({ events }: { events: CalendarEvent[] }) {
     return d;
   }, []);
 
-  // Map events to their calendar date (as toDateString key)
+  // Use explicit y-m-d key to avoid locale/timezone issues with toDateString()
+  function dayKey(d: Date) {
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  }
+
+  function isSameDay(a: Date, b: Date) {
+    return dayKey(a) === dayKey(b);
+  }
+
+  // Group non-school events by local calendar date
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const e of events) {
+      if (e.source === 'School') continue;
       const d = parseLocalDate(e.start);
-      d.setHours(0, 0, 0, 0);
-      const key = d.toDateString();
+      const key = dayKey(d);
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(e);
     }
     return map;
   }, [events]);
 
-  function isSameDay(a: Date, b: Date) {
-    return a.toDateString() === b.toDateString();
-  }
+  // Group assignments by due date
+  const assignmentsByDay = useMemo(() => {
+    const map = new Map<string, Assignment[]>();
+    for (const a of assignments) {
+      if (!a.dueAt || a.status === 'Done') continue;
+      const d = parseLocalDate(a.dueAt);
+      const key = dayKey(d);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(a);
+    }
+    return map;
+  }, [assignments]);
 
   function getWeekDays(ref: Date): Date[] {
     const d = new Date(ref);
@@ -382,16 +406,15 @@ export function CalendarView({ events }: { events: CalendarEvent[] }) {
 
   const sourcePill: Record<string, string> = {
     Basketball: 'bg-emerald-500 text-white',
-    School: 'bg-blue-500 text-white',
     Holiday: 'bg-amber-400 text-white',
     Personal: 'bg-purple-500 text-white',
   };
 
   const sourceDot: Record<string, string> = {
     Basketball: 'bg-emerald-500',
-    School: 'bg-blue-500',
     Holiday: 'bg-amber-400',
     Personal: 'bg-purple-500',
+    Deadline: 'bg-blue-500',
   };
 
   const DAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -412,7 +435,11 @@ export function CalendarView({ events }: { events: CalendarEvent[] }) {
       </button>
       <button
         className="rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-sm font-bold text-stone-600 transition hover:bg-stone-50"
-        onClick={() => { const d = new Date(); d.setHours(0,0,0,0); setRefDate(d); }}
+        onClick={() => {
+          const d = new Date();
+          d.setHours(0, 0, 0, 0);
+          setRefDate(d);
+        }}
         type="button"
       >
         Today
@@ -463,34 +490,68 @@ export function CalendarView({ events }: { events: CalendarEvent[] }) {
           ))}
           {weekDays.map((day) => {
             const isToday = isSameDay(day, today);
-            const dayEvts = (eventsByDay.get(day.toDateString()) ?? [])
-              .filter((e) => e.source !== 'School')
+            const key = dayKey(day);
+            const dayEvts = (eventsByDay.get(key) ?? [])
               .sort((a, b) => parseLocalDate(a.start).getTime() - parseLocalDate(b.start).getTime());
+            const dayAssignments = assignmentsByDay.get(key) ?? [];
             return (
               <div
-                key={day.toDateString()}
-                className={`min-h-[100px] rounded-lg border p-1 sm:p-1.5 ${isToday ? 'border-redbird-500 bg-red-50' : 'border-stone-200 bg-white'}`}
+                key={key}
+                className={`min-h-[110px] rounded-lg border p-1 sm:p-1.5 ${isToday ? 'border-redbird-500 bg-red-50' : 'border-stone-200 bg-white'}`}
               >
                 <p className={`mb-1 text-center text-xs font-black ${isToday ? 'text-redbird-600' : 'text-stone-500'}`}>
                   {day.getDate()}
                 </p>
                 <div className="grid gap-0.5">
                   {dayEvts.map((e) => (
-                    <div
+                    <a
+                      href={e.source === 'Basketball' ? LINKS.teamworks : LINKS.googleCalendar}
                       key={e.id}
-                      className={`truncate rounded px-1 py-0.5 text-[9px] font-bold leading-tight ${sourcePill[e.source] ?? 'bg-stone-400 text-white'}`}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      className={`truncate rounded px-1 py-0.5 text-[11px] font-bold leading-tight hover:opacity-80 ${sourcePill[e.source] ?? 'bg-stone-400 text-white'}`}
                       title={cleanEventTitle(e.title)}
                     >
                       {!isAllDayEvent(e.start) && (
-                        <span className="mr-0.5 opacity-80">{formatTime(e.start)}</span>
+                        <span className="mr-0.5 opacity-75">{formatTime(e.start)}</span>
                       )}
                       {cleanEventTitle(e.title)}
-                    </div>
+                    </a>
+                  ))}
+                  {dayAssignments.map((a) => (
+                    <a
+                      href={a.canvasUrl || LINKS.canvas}
+                      key={a.id}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      className="truncate rounded border border-blue-400 px-1 py-0.5 text-[11px] font-bold leading-tight text-blue-700 hover:bg-blue-50"
+                      title={a.title}
+                    >
+                      📚 {a.title}
+                    </a>
                   ))}
                 </div>
               </div>
             );
           })}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-emerald-500" />
+            <span className="text-xs font-semibold text-stone-600">Basketball</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-purple-500" />
+            <span className="text-xs font-semibold text-stone-600">Personal</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full bg-amber-400" />
+            <span className="text-xs font-semibold text-stone-600">Holiday</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="size-2.5 rounded-full border border-blue-400 bg-white" />
+            <span className="text-xs font-semibold text-stone-600">Deadline</span>
+          </div>
         </div>
       </DashboardCard>
     );
@@ -509,31 +570,39 @@ export function CalendarView({ events }: { events: CalendarEvent[] }) {
             {d}
           </div>
         ))}
-        {monthGrid.map((day, i) =>
-          day ? (
+        {monthGrid.map((day, i) => {
+          if (!day) return <div key={i} />;
+          const isToday = isSameDay(day, today);
+          const key = dayKey(day);
+          const dayEvts = eventsByDay.get(key) ?? [];
+          const dayAssignments = assignmentsByDay.get(key) ?? [];
+          return (
             <div
               key={i}
-              className={`min-h-[56px] rounded-lg border p-1 ${isSameDay(day, today) ? 'border-redbird-500 bg-red-50' : 'border-stone-200 bg-white'}`}
+              className={`min-h-[60px] rounded-lg border p-1 ${isToday ? 'border-redbird-500 bg-red-50' : 'border-stone-200 bg-white'}`}
             >
-              <p className={`mb-1 text-center text-xs font-black ${isSameDay(day, today) ? 'text-redbird-600' : 'text-stone-600'}`}>
+              <p className={`mb-1 text-center text-xs font-black ${isToday ? 'text-redbird-600' : 'text-stone-600'}`}>
                 {day.getDate()}
               </p>
               <div className="flex flex-wrap justify-center gap-0.5">
-                {(eventsByDay.get(day.toDateString()) ?? [])
-                  .filter((e) => e.source !== 'School')
-                  .map((e) => (
-                    <span
-                      key={e.id}
-                      className={`size-2 rounded-full ${sourceDot[e.source] ?? 'bg-stone-400'}`}
-                      title={cleanEventTitle(e.title)}
-                    />
-                  ))}
+                {dayEvts.map((e) => (
+                  <span
+                    key={e.id}
+                    className={`size-2 rounded-full ${sourceDot[e.source] ?? 'bg-stone-400'}`}
+                    title={cleanEventTitle(e.title)}
+                  />
+                ))}
+                {dayAssignments.map((a) => (
+                  <span
+                    key={a.id}
+                    className="size-2 rounded-full bg-blue-500"
+                    title={`Due: ${a.title}`}
+                  />
+                ))}
               </div>
             </div>
-          ) : (
-            <div key={i} />
-          ),
-        )}
+          );
+        })}
       </div>
       <div className="mt-3 flex flex-wrap gap-3">
         {Object.entries(sourceDot).map(([source, color]) => (

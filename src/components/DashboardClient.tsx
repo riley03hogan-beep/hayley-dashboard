@@ -182,7 +182,7 @@ export function DashboardClient({ today: _today }: { today: string }) {
 
         <div className="mx-auto grid max-w-[1500px] gap-3 sm:gap-5">
           <TodayView assignments={assignments} events={events} today={today} />
-          <CalendarView events={events} />
+          <CalendarView assignments={assignments} events={events} />
           <InboxRequiringAction emails={emails} />
           <ThisWeekView
             assignments={assignments}
