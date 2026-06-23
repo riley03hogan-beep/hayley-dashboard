@@ -202,7 +202,9 @@ async function fetchCalendarEvents(accessToken: string): Promise<CalendarEvent[]
     accessToken,
   );
   const calendars = (calendarList.items ?? []).filter((calendar) => calendar.selected || calendar.primary).slice(0, 10);
-  const timeMin = startOfToday().toISOString();
+  // Go back 1 day so events from earlier today (already ended) are still fetched —
+  // they'll show crossed off in the calendar view rather than disappearing.
+  const timeMin = addDays(startOfToday(), -1).toISOString();
   const timeMax = addDays(startOfToday(), 35).toISOString();
 
   const eventGroups = await Promise.all(
@@ -263,6 +265,8 @@ function mapCalendarEvent(event: GoogleCalendarEvent, calendarName: string): Cal
   const title = event.summary || 'Untitled event';
   const start = event.start?.dateTime || event.start?.date || new Date().toISOString();
   const end = event.end?.dateTime || event.end?.date || start;
+  // Pass title separately so course-code detection only fires on the title,
+  // not on descriptions/locations (which can contain [KNR] etc. for basketball events).
   const searchable = `${title} ${event.description ?? ''} ${event.location ?? ''} ${calendarName}`.toLowerCase();
 
   return {
@@ -271,7 +275,7 @@ function mapCalendarEvent(event: GoogleCalendarEvent, calendarName: string): Cal
     start,
     end,
     dayLabel: getDayLabel(start),
-    source: getEventSource(searchable, calendarName),
+    source: getEventSource(title, searchable, calendarName),
     location: event.location || calendarName,
   };
 }
@@ -297,11 +301,14 @@ function mapGmailMessage(message: GmailMessageResponse): EmailMessage {
   };
 }
 
-function getEventSource(value: string, calendarName: string): EventSource {
+function getEventSource(title: string, searchable: string, calendarName: string): EventSource {
   const calendar = calendarName.toLowerCase();
-  const s = (value + ' ' + calendarName).toLowerCase();
-  if (calendar.includes('canvas') || s.includes('[knr') || s.includes('[spm')) return 'School';
-  if (calendar.includes('basketball') || calendar.includes('teamworks') || s.includes('basketball') || s.includes('teamworks')) return 'Basketball';
+  const titleLower = title.toLowerCase();
+  // Only classify as School if the calendar is Canvas OR the event TITLE starts with a course code
+  // like [KNR 440] or [SPM 101]. Checking only the title prevents basketball event descriptions
+  // (which may contain course codes) from being misclassified.
+  if (calendar.includes('canvas') || /^\[knr|\[spm/i.test(titleLower)) return 'School';
+  if (calendar.includes('basketball') || calendar.includes('teamworks') || searchable.includes('basketball') || searchable.includes('teamworks')) return 'Basketball';
   if (calendar.includes('holiday') || calendar.includes('holidays') || calendar.includes('united states')) return 'Holiday';
   return 'Personal';
 }
