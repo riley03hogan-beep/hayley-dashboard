@@ -236,21 +236,31 @@ export function ThisWeekView({
   events: CalendarEvent[];
   weekWorkloadMinutes: number;
 }) {
-  // Only show events from tomorrow onward (strictly future days, not today, not past)
+  // Only show events from tomorrow through end of this Sunday
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  // End of week = start of next Monday (i.e. this Sunday at midnight)
+  const dow = todayStart.getDay(); // 0=Sun, 1=Mon...
+  const daysUntilMonday = dow === 0 ? 1 : 8 - dow;
+  const endOfWeek = new Date(todayStart);
+  endOfWeek.setDate(todayStart.getDate() + daysUntilMonday);
 
   const futureEvents = events.filter(
     (e) =>
       e.source !== 'School' &&
       e.dayLabel !== 'Today' &&
-      parseLocalDate(e.start) >= tomorrowStart,
+      parseLocalDate(e.start) >= tomorrowStart &&
+      parseLocalDate(e.start) < endOfWeek,
   );
-  // Assignments not due today and not overdue
+  // Assignments due this week (not today, not overdue)
   const futureAssignments = assignments.filter(
-    (a) => a.status !== 'Done' && !isDueToday(a) && a.status !== 'Overdue',
+    (a) =>
+      a.status !== 'Done' &&
+      !isDueToday(a) &&
+      a.status !== 'Overdue' &&
+      (!a.dueAt || parseLocalDate(a.dueAt) < endOfWeek),
   );
 
   type Item =

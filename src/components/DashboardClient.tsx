@@ -139,13 +139,21 @@ export function DashboardClient({ today: _today }: { today: string }) {
     return assignmentMins + eventMins + emailMins;
   }, [assignments, events, emails]);
 
-  const weekWorkloadMinutes = useMemo(
-    () =>
-      assignments
-        .filter((assignment) => assignment.status !== 'Done')
-        .reduce((sum, assignment) => sum + assignment.estimatedMinutes, 0),
-    [assignments],
-  );
+  const weekWorkloadMinutes = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const dow = todayStart.getDay();
+    const daysUntilMonday = dow === 0 ? 1 : 8 - dow;
+    const endOfWeek = new Date(todayStart);
+    endOfWeek.setDate(todayStart.getDate() + daysUntilMonday);
+    return assignments
+      .filter(
+        (a) =>
+          a.status !== 'Done' &&
+          (!a.dueAt || parseLocalDate(a.dueAt) < endOfWeek),
+      )
+      .reduce((sum, a) => sum + a.estimatedMinutes, 0);
+  }, [assignments]);
 
   const dueTodayCount = useMemo(
     () =>
